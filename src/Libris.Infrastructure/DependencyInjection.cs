@@ -6,6 +6,7 @@ using Npgsql;
 using Libris.Application.Abstractions.Auth;
 using Libris.Application.Abstractions.Persistence;
 using Libris.Application.UseCases.Auth;
+using Libris.Application.UseCases.Genres;
 using Libris.Application.Validators.Auth;
 using Libris.Infrastructure.Auth;
 using Libris.Infrastructure.Persistence;
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<AuthService>();
+        services.AddScoped<GenreService>();
 
         services.AddValidatorsFromAssemblyContaining<SignupRequestValidator>();
 

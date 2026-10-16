@@ -7,6 +7,10 @@ public interface IApplicationDbContext
 {
     DbSet<User> Users { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
+    DbSet<Book> Books { get; }
+    DbSet<Genre> Genres { get; }
+    DbSet<ReadingLog> ReadingLogs { get; }
+    DbSet<Cover> Covers { get; }
 
     Task<IApplicationDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 

@@ -12,6 +12,10 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Book> Books => Set<Book>();
+    public DbSet<Genre> Genres => Set<Genre>();
+    public DbSet<ReadingLog> ReadingLogs => Set<ReadingLog>();
+    public DbSet<Cover> Covers => Set<Cover>();
 
     public async Task<IApplicationDbTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
@@ -30,6 +34,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
 
+        // Lets search match "assombracao" against "Assombração".
+        modelBuilder.HasPostgresExtension("unaccent");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
 
