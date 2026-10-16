@@ -228,21 +228,32 @@ Confira o nome real do volume (o Compose prefixa com o nome do projeto):
 docker volume ls | grep libris
 ```
 
-Esperado: `billfolder_libris_covers`. Se for outro, troque nas duas linhas abaixo.
+Esperado: `billfolder_libris_covers`. Se for outro, passe `COVERS_VOLUME=<nome>` na linha do cron abaixo.
+
+O backup é o script `scripts/backup-libris.sh` deste repo. Ele usa `pipefail` e só renomeia o arquivo depois que tudo deu certo: se o `pg_dump` falhar, o cron registra o erro, não fica um `.sql.gz` vazio com cara de backup, e a rotação de 14 dias não roda (os backups bons não são apagados).
+
+Copiar o script (Mac):
 
 ```bash
-(crontab -l | grep -v 'libris-'; echo '30 3 * * * { cd /opt/billfolder && docker compose exec -T postgres pg_dump -U billfolder libris | gzip > /opt/billfolder/backups/libris-$(date +\%F).sql.gz && docker run --rm -v billfolder_libris_covers:/c:ro -v /opt/billfolder/backups:/b alpine tar czf /b/libris-covers-$(date +\%F).tgz -C /c . && find /opt/billfolder/backups -name "libris-*" -mtime +14 -delete; } >> /opt/billfolder/logs/backup-libris.log 2>&1') | crontab -
+scp -i ~/.ssh/billfolder_deploy_key ~/Repos/Libris/scripts/backup-libris.sh deploy@178.104.160.8:/opt/billfolder/scripts/backup-libris.sh
+```
+
+Agendar (VPS):
+
+```bash
+chmod +x /opt/billfolder/scripts/backup-libris.sh
+(crontab -l | grep -v 'libris'; echo '30 3 * * * /opt/billfolder/scripts/backup-libris.sh >> /opt/billfolder/logs/backup-libris.log 2>&1') | crontab -
 crontab -l | tail -3
 ```
 
-O `grep -v 'libris-'` substitui uma linha anterior do Libris em vez de duplicar; as linhas do BillFolder e do Verto ficam intactas.
+O `grep -v 'libris'` substitui uma linha anterior do Libris em vez de duplicar; as linhas do BillFolder e do Verto ficam intactas.
 
-Testar agora:
+Testar agora (VPS):
 
 ```bash
-cd /opt/billfolder && docker compose exec -T postgres pg_dump -U billfolder libris | gzip > backups/libris-$(date +%F).sql.gz && ls -la backups/libris-*
-gunzip -c backups/libris-$(date +%F).sql.gz | grep -c "CREATE TABLE"
-docker run --rm -v billfolder_libris_covers:/c:ro -v /opt/billfolder/backups:/b alpine tar czf /b/libris-covers-$(date +%F).tgz -C /c . && tar tzf backups/libris-covers-$(date +%F).tgz | head
+/opt/billfolder/scripts/backup-libris.sh && ls -la /opt/billfolder/backups/libris-*
+gunzip -c /opt/billfolder/backups/libris-$(date +%F).sql.gz | grep -c "CREATE TABLE"
+tar tzf /opt/billfolder/backups/libris-covers-$(date +%F).tgz | head
 ```
 
 Esperado: os dois arquivos do dia; **8** tabelas (`users`, `refresh_tokens`, `books`, `genres`, `book_genres`, `reading_logs`, `covers`, `__EFMigrationsHistory`); e a lista de `.webp` das capas (vazia até a primeira capa).
