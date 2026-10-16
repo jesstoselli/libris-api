@@ -1,8 +1,14 @@
-using Libris.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Libris.Application.Abstractions.Auth;
+using Libris.Application.Abstractions.Persistence;
+using Libris.Application.UseCases.Auth;
+using Libris.Application.Validators.Auth;
+using Libris.Infrastructure.Auth;
+using Libris.Infrastructure.Persistence;
 
 namespace Libris.Infrastructure;
 
@@ -32,6 +38,16 @@ public static class DependencyInjection
         });
         services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
             options.UseNpgsql(serviceProvider.GetRequiredService<NpgsqlDataSource>()));
+        services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+
+        services.AddSingleton<IPasswordHasher, Argon2idPasswordHasher>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<AuthService>();
+
+        services.AddValidatorsFromAssemblyContaining<SignupRequestValidator>();
 
         return services;
     }
