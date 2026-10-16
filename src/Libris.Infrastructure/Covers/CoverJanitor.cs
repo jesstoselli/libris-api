@@ -3,22 +3,27 @@ using Libris.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Libris.Infrastructure.Covers;
 
 /// <summary>Deletes covers uploaded for a form that was never saved.</summary>
-public sealed class CoverJanitor : BackgroundService
+public sealed partial class CoverJanitor : BackgroundService
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromHours(24);
     private static readonly TimeSpan Grace = TimeSpan.FromHours(24);
 
     private readonly IServiceScopeFactory _scopes;
     private readonly ICoverStorage _storage;
+    private readonly IOptions<CoverOptions> _options;
+    private readonly ILogger<CoverJanitor> _logger;
 
-    public CoverJanitor(IServiceScopeFactory scopes, ICoverStorage storage)
+    public CoverJanitor(IServiceScopeFactory scopes, ICoverStorage storage, IOptions<CoverOptions> options, ILogger<CoverJanitor> logger)
     {
         _scopes = scopes;
         _storage = storage;
+        _options = options;
+        _logger = logger;
     }
 
     public async Task SweepAsync(DateTime now, CancellationToken ct)
@@ -43,12 +48,42 @@ public sealed class CoverJanitor : BackgroundService
         }
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    /// <summary>
+    /// A failed sweep is logged and retried next time: an exception escaping a BackgroundService stops the
+    /// whole host by default, and the shared Postgres is briefly down whenever BillFolder recreates it.
+    /// </summary>
+    public async Task<bool> TrySweepAsync(DateTime now, CancellationToken ct)
     {
-        using var timer = new PeriodicTimer(Interval);
-        while (await timer.WaitForNextTickAsync(stoppingToken))
+        try
         {
-            await SweepAsync(DateTime.UtcNow, stoppingToken);
+            await SweepAsync(now, ct);
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            LogSweepFailed(_logger, ex);
+            return false;
         }
     }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var options = _options.Value;
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(options.JanitorStartupDelaySeconds), stoppingToken);
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.JanitorIntervalSeconds));
+            do
+            {
+                await TrySweepAsync(DateTime.UtcNow, stoppingToken);
+            }
+            while (await timer.WaitForNextTickAsync(stoppingToken));
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Cover sweep failed; retrying on the next run.")]
+    private static partial void LogSweepFailed(ILogger logger, Exception exception);
 }
