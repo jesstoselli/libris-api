@@ -123,15 +123,9 @@ public class ReadingLogService
 
     private static List<ReadingLogDto> ToDtos(Book book)
     {
-        var deltas = ReadingProgress.Deltas(book.Logs);
-        var dtos = new List<ReadingLogDto>(deltas.Count);
-        var previousPage = 0;
-        foreach (var delta in deltas)
-        {
-            dtos.Add(new ReadingLogDto(delta.Log.Id, delta.Log.Date, delta.Log.Page, previousPage, delta.PagesRead));
-            previousPage = delta.Log.Page;
-        }
-
+        var dtos = ReadingProgress.Deltas(book.Logs)
+            .Select(d => new ReadingLogDto(d.Log.Id, d.Log.Date, d.Log.Page, d.FromPage, d.PagesRead))
+            .ToList();
         dtos.Reverse();
         return dtos;
     }

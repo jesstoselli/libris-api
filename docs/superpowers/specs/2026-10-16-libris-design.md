@@ -102,7 +102,7 @@ Todas as entidades têm `id` (UUID), `userId`, `createdAt` e `updatedAt`. Nada d
 ### Regras
 
 - **Progresso atual** = `page` do registro com a data mais recente (no empate, o criado por último). Sem registros, 0.
-- **Páginas lidas num registro** = `page` − `page` do registro anterior do mesmo livro (ordenado por data e criação). O primeiro registro conta a partir de 0. Um delta negativo (corrigi pra trás) conta como 0. As estatísticas somam esses deltas pela `date` de cada registro.
+- **Páginas lidas num registro** = `page` − a **maior página já registrada antes** nesse livro (ordenado por data e criação; 0 no primeiro registro), nunca negativo. Assim uma correção pra trás conta 0, e ler de novo até onde já se tinha chegado não conta em dobro (ex.: 140 por engano, corrigido pra 120, depois 150 → 140 + 0 + 10). Pra um erro pra cima, o caminho é editar o registro. As estatísticas somam esses valores pela `date` de cada registro.
 - **Qualquer registro** num livro `not_started` → status vira `reading`. Se `startedAt` estiver vazio, recebe a `date` desse registro. *(Decisão minha: vale também pra um livro que voltou pra `not_started` e já tem registros.)*
 - **Registro com `page = totalPages`** → status vira `read`, e se `finishedAt` estiver vazio, recebe a `date` desse registro.
 - **Mudar o status na mão** (pelos carimbos da Ficha):

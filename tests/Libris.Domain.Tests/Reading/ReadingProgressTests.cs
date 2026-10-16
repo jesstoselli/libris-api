@@ -68,6 +68,23 @@ public sealed class ReadingProgressTests
     }
 
     [Fact]
+    public void Deltas_TypoThenCorrectionThenProgress_CountsEachPageOnce()
+    {
+        var logs = new[]
+        {
+            Log(140, new DateOnly(2026, 10, 14)),
+            Log(120, new DateOnly(2026, 10, 15)),
+            Log(150, new DateOnly(2026, 10, 16)),
+        };
+
+        var deltas = ReadingProgress.Deltas(logs);
+
+        deltas.Select(d => d.PagesRead).Should().Equal(140, 0, 10);
+        deltas.Select(d => d.FromPage).Should().Equal(0, 140, 140);
+        ReadingProgress.CurrentPage(logs).Should().Be(150);
+    }
+
+    [Fact]
     public void CurrentPage_NoLogs_IsZero() => ReadingProgress.CurrentPage([]).Should().Be(0);
 
     [Fact]

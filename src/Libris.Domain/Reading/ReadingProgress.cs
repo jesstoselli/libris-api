@@ -2,7 +2,8 @@ using Libris.Domain.Entities;
 
 namespace Libris.Domain.Reading;
 
-public sealed record LogDelta(ReadingLog Log, int PagesRead);
+/// <param name="FromPage">The furthest page reached before this log; pages are counted from there.</param>
+public sealed record LogDelta(ReadingLog Log, int FromPage, int PagesRead);
 
 public static class ReadingProgress
 {
@@ -10,13 +11,14 @@ public static class ReadingProgress
     {
         ArgumentNullException.ThrowIfNull(logs);
 
-        var previousPage = 0;
+        // Counted against the furthest page reached, not the previous log: after a typo (140) and its
+        // correction (120), reading on to 150 adds 10 pages, not 30 — the same pages never count twice.
+        var furthest = 0;
         var deltas = new List<LogDelta>();
         foreach (var log in Chronological(logs))
         {
-            // A lower page is a correction, not negative reading.
-            deltas.Add(new LogDelta(log, Math.Max(0, log.Page - previousPage)));
-            previousPage = log.Page;
+            deltas.Add(new LogDelta(log, furthest, Math.Max(0, log.Page - furthest)));
+            furthest = Math.Max(furthest, log.Page);
         }
 
         return deltas;
