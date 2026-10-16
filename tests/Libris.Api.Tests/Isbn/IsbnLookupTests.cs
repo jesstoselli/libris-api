@@ -76,6 +76,50 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Lookup_OpenLibraryUnexpectedShape_FallsBackToGoogle()
+    {
+        var fixtures = FixtureHandler();
+        var openLibrary = new StubHandler(request =>
+        {
+            if (!request.RequestUri!.AbsolutePath.StartsWith("/isbn/", StringComparison.Ordinal))
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+
+            // Catalogue data seen in the wild: pages as text, publishers as objects.
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{ "title": "Dracula", "number_of_pages": "about 466", "publishers": [{ "name": "Penguin" }], "covers": ["x"] }""",
+                    System.Text.Encoding.UTF8,
+                    "application/json"),
+            };
+        });
+        using var client = await ClientAsync(openLibrary, fixtures);
+
+        using var response = await client.GetAsync(new Uri("/v1/isbn/9780141439846", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.ReadAsync<IsbnLookupDto>();
+        result.Title.Should().Be("Dracula");
+        result.TotalPages.Should().Be(488);
+    }
+
+    [Fact]
+    public async Task Lookup_GoogleUnexpectedShape_IsUnavailableNotServerError()
+    {
+        var google = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("""{ "totalItems": 1, "items": [{ "id": "x" }] }""", System.Text.Encoding.UTF8, "application/json"),
+        });
+        using var client = await ClientAsync(FixtureHandler(), google);
+
+        using var response = await client.GetAsync(new Uri("/v1/isbn/9788501012791", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
+    [Fact]
     public async Task Lookup_AuthorsOnlyOnWork_AreRead()
     {
         using var client = await ClientAsync(FixtureHandler(), FixtureHandler());

@@ -58,7 +58,9 @@ public sealed class OpenLibraryIsbnSource : IIsbnSource
                     ? [.. subjects.EnumerateArray().Select(s => s.GetString()).OfType<string>()]
                     : []));
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException && !ct.IsCancellationRequested)
+        // Any failure, including catalogue JSON in an unexpected shape, makes this source "down" so the next one
+        // still gets a chance; only the caller's own cancellation propagates.
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
         {
             return IsbnSourceResult.Failed;
         }
