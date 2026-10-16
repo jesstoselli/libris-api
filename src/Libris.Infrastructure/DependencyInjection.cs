@@ -7,6 +7,9 @@ using Libris.Application.Abstractions.Auth;
 using Libris.Application.Abstractions.Persistence;
 using Libris.Application.UseCases.Auth;
 using Libris.Application.UseCases.Genres;
+using Libris.Application.UseCases.Books;
+using Libris.Application.Abstractions.Books;
+using Libris.Infrastructure.Books;
 using Libris.Application.Validators.Auth;
 using Libris.Infrastructure.Auth;
 using Libris.Infrastructure.Persistence;
@@ -48,6 +51,8 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<AuthService>();
         services.AddScoped<GenreService>();
+        services.AddScoped<BookService>();
+        services.AddSingleton<IBookSearch, PostgresBookSearch>();
 
         services.AddValidatorsFromAssemblyContaining<SignupRequestValidator>();
 

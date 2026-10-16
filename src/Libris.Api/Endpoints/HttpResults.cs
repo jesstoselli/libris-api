@@ -36,6 +36,8 @@ public static class HttpResults
             "signup_disabled" => StatusCodes.Status403Forbidden,
             "not_found" => StatusCodes.Status404NotFound,
             "genre_already_exists" => StatusCodes.Status409Conflict,
+            "isbn_already_registered" => StatusCodes.Status409Conflict,
+            "already_owned" => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest,
         };
 

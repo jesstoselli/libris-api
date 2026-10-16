@@ -118,6 +118,7 @@ app.MapGet("/v1/health", async (ApplicationDbContext db, CancellationToken ct) =
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapGenresEndpoints();
+app.MapBooksEndpoints();
 
 await app.RunAsync();
 
