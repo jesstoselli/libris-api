@@ -17,3 +17,19 @@ Precisam do Docker rodando (Testcontainers sobe um Postgres por classe de teste)
 ```bash
 dotnet test
 ```
+
+## Configuração
+
+| Chave | Padrão | Observação |
+|---|---|---|
+| `ConnectionStrings:Postgres` | — | obrigatória |
+| `Jwt:Key` / `Jwt:Issuer` / `Jwt:Audience` | — / `libris` / `libris-app` | |
+| `Auth:AllowSignup` | `false` | ligar só pra criar a conta |
+| `Auth:LoginPermitPerMinute` | `10` | tentativas de login por IP por minuto |
+| `Cors:AllowedOrigins` | origens do Tauri | |
+| `Covers:Path` | `/data/covers` | volume Docker em produção |
+| `Isbn:GoogleBooksApiKey` | vazio | opcional; sem ela a cota anônima do Google costuma estar esgotada |
+
+## Deploy
+
+`docs/deploy.md` (mesma VPS e Postgres do BillFolder).
