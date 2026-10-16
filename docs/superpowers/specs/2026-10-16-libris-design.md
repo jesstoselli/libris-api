@@ -44,18 +44,19 @@ Mais a **Wishlist**: livros que eu ainda não tenho e quero comprar.
 
 Referências guardadas em `docs/design/`:
 - `mock-original.webp`: mock validado (Acervo, Ficha, Registrar Livro).
-- `telas-v2.html`: rascunho aprovado das telas que faltavam (Acervo com filtros, Ficha com registro de leitura, Números). Para abrir no navegador, o `damask-bg.svg` precisa estar na mesma pasta.
-- `damask-bg.svg`: textura adamascada do fundo.
+- `telas-v3.html`: rascunho aprovado das telas que faltavam (Acervo com filtros, Ficha com registro de leitura, Números), já no **modo escuro**. Para abrir no navegador, o `damask-bg-forest.svg` precisa estar na mesma pasta. (`telas-v2.html` é a versão clara anterior, só como histórico.)
+- `damask-bg-forest.svg`: textura adamascada do fundo, recolorida em verdes (`#3E3820` → `#675B31`). `damask-bg.svg` é a original em tons de bege.
 
 **Tokens (paleta "A Gathering of Spooks")**
 
 | Token | Cor | Uso |
 |---|---|---|
-| `ghoulish-ale` | `#E7BC89` | fundo (sob o damasco) |
+| `ghoulish-ale` | `#E7BC89` | fita lateral; títulos e textos soltos sobre a mesa |
 | `vampire-venom` | `#6B0302` | títulos, ações principais, carimbo ativo |
 | `pumpkin-poison` | `#C55B31` | detalhes: tags, barra de progresso, gráfico |
 | `eye-of-the-wolf` | `#DA8825` | detalhes: tags |
-| `haunted-forest` | `#675B31` | fita lateral, tags |
+| `haunted-forest` | `#675B31` | mesa (tom claro do damasco), ícones da fita, tags |
+| `forest-deep` | `#3E3820` | mesa (tom escuro do damasco, cor de base) |
 
 Papel das fichas: um tom mais claro que o fundo (no rascunho, `#F7E7CC`), com sombra rígida deslocada (sem blur).
 
@@ -63,9 +64,10 @@ Papel das fichas: um tom mais claro que o fundo (no rascunho, `#F7E7CC`), com so
 
 **Decisões já tomadas**
 - **Sem capitular** ou letra iluminada: os títulos são texto normal em Aleo ("Acervo de leituras", "Números de 2026"), sem caixa-alta forçada.
-- Navegação por uma **fita de tecido** vertical à esquerda (verde `haunted-forest`, com ponta em V), com ícone e rótulo: **Acervo · Wishlist · Números · Registrar**.
+- **Mesa escura**: o fundo é verde (damasco recolorido) e as fichas de papel continuam claras por cima. Textos que ficam direto sobre a mesa (títulos de página, subtítulos, filtros de gênero/busca) usam `ghoulish-ale`; textos dentro das fichas continuam em `vampire-venom`/tinta.
+- Navegação por uma **fita de tecido** vertical à esquerda (bege `ghoulish-ale`, com ponta em V), com ícone e rótulo em `haunted-forest` e o item ativo em `vampire-venom`: **Acervo · Wishlist · Números · Registrar**.
 - Situação do livro aparece como **carimbo** (borda grossa, leve rotação), tanto no filtro quanto na ficha.
-- O fundo é `ghoulish-ale` com o damasco por cima em `mix-blend-mode: multiply` e opacidade parcial.
+- O fundo é o `damask-bg-forest.svg` repetido, sem blend, sobre `forest-deep`.
 
 ## Domínio
 
