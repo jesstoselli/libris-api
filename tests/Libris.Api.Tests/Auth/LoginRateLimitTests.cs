@@ -35,4 +35,22 @@ public sealed class LoginRateLimitTests : IAsyncLifetime
         using var limited = await client.PostAsJsonAsync("/v1/auth/login", wrong);
         limited.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
+
+    [Fact]
+    public async Task Login_TrailingSlash_CountsTowardTheSameLimit()
+    {
+        using var client = _factory.CreateClient();
+        var email = AuthTestClient.NewEmail();
+        await AuthTestClient.SignupAsync(client, email);
+        var wrong = new LoginRequest(email, "wrong-password-1");
+
+        for (var i = 0; i < 3; i++)
+        {
+            using var rejected = await client.PostAsJsonAsync("/v1/auth/login/", wrong);
+            rejected.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        }
+
+        using var limited = await client.PostAsJsonAsync("/V1/Auth/Login/", wrong);
+        limited.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
 }

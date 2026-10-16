@@ -76,7 +76,7 @@ builder.Services.AddRateLimiter(options =>
     // Global rather than an endpoint policy: an endpoint policy would replace the group's
     // concurrency limiter on login instead of adding to it.
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-        context.Request.Path.Equals("/v1/auth/login", StringComparison.OrdinalIgnoreCase)
+        context.GetEndpoint()?.Metadata.GetMetadata<LoginEndpointMarker>() is not null
             ? RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions
