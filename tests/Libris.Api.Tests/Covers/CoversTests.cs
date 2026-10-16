@@ -13,8 +13,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 
 namespace Libris.Api.Tests.Covers;
 
@@ -40,6 +39,7 @@ public sealed class CoversTests : IClassFixture<ApiWebApplicationFactory>
         using var image = await GetImageAsync(client, cover.Url);
         image.Height.Should().Be(600);
         image.Width.Should().Be(400);
+        (await GetFormatAsync(client, cover.Url)).Should().Be(SKEncodedImageFormat.Webp);
     }
 
     [Fact]
@@ -249,24 +249,23 @@ public sealed class CoversTests : IClassFixture<ApiWebApplicationFactory>
         return await client.PostAsync(new Uri("/v1/covers", UriKind.Relative), content);
     }
 
-    private static async Task<byte[]> ImageBytesAsync(int width, int height, bool jpeg)
+    private static Task<byte[]> ImageBytesAsync(int width, int height, bool jpeg)
     {
-        using var image = new Image<Rgba32>(width, height, new Rgba32(107, 3, 2));
-        using var stream = new MemoryStream();
-        if (jpeg)
-        {
-            await image.SaveAsJpegAsync(stream);
-        }
-        else
-        {
-            await image.SaveAsPngAsync(stream);
-        }
-
-        return stream.ToArray();
+        using var bitmap = new SKBitmap(width, height);
+        bitmap.Erase(new SKColor(107, 3, 2));
+        using var image = SKImage.FromBitmap(bitmap);
+        using var data = image.Encode(jpeg ? SKEncodedImageFormat.Jpeg : SKEncodedImageFormat.Png, 90);
+        return Task.FromResult(data.ToArray());
     }
 
-    private static async Task<Image> GetImageAsync(HttpClient client, string url) =>
-        await Image.LoadAsync(await client.GetStreamAsync(new Uri(url, UriKind.Relative)));
+    private static async Task<SKBitmap> GetImageAsync(HttpClient client, string url) =>
+        SKBitmap.Decode(await client.GetByteArrayAsync(new Uri(url, UriKind.Relative)));
+
+    private static async Task<SKEncodedImageFormat> GetFormatAsync(HttpClient client, string url)
+    {
+        using var codec = SKCodec.Create(new MemoryStream(await client.GetByteArrayAsync(new Uri(url, UriKind.Relative))));
+        return codec.EncodedFormat;
+    }
 
     private static async Task<HttpStatusCode> GetStatusAsync(HttpClient client, string url)
     {
