@@ -494,3 +494,4 @@ appsettings.Development.json
 postgres_data/
 
 .superpowers/
+.covers-dev/
