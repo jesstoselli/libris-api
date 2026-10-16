@@ -38,6 +38,8 @@ public static class HttpResults
             "genre_already_exists" => StatusCodes.Status409Conflict,
             "isbn_already_registered" => StatusCodes.Status409Conflict,
             "already_owned" => StatusCodes.Status409Conflict,
+            "image_too_large" => StatusCodes.Status413PayloadTooLarge,
+            "download_failed" => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status400BadRequest,
         };
 

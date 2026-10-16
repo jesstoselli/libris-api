@@ -15,6 +15,9 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Matches nginx's client_max_body_size: a 5 MB cover plus multipart overhead.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 6 * 1024 * 1024);
+
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower)));
@@ -120,6 +123,7 @@ app.MapUsersEndpoints();
 app.MapGenresEndpoints();
 app.MapBooksEndpoints();
 app.MapReadingLogsEndpoints();
+app.MapCoversEndpoints();
 
 await app.RunAsync();
 

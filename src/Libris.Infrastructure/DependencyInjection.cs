@@ -9,6 +9,9 @@ using Libris.Application.UseCases.Auth;
 using Libris.Application.UseCases.Genres;
 using Libris.Application.UseCases.Books;
 using Libris.Application.UseCases.Reading;
+using Libris.Application.UseCases.Covers;
+using Libris.Application.Abstractions.Covers;
+using Libris.Infrastructure.Covers;
 using Libris.Application.Abstractions.Books;
 using Libris.Infrastructure.Books;
 using Libris.Application.Validators.Auth;
@@ -54,6 +57,15 @@ public static class DependencyInjection
         services.AddScoped<GenreService>();
         services.AddScoped<BookService>();
         services.AddScoped<ReadingLogService>();
+
+        services.Configure<CoverOptions>(configuration.GetSection(CoverOptions.SectionName));
+        services.AddScoped<CoverService>();
+        services.AddSingleton<ICoverStorage, FileSystemCoverStorage>();
+        services.AddSingleton<ICoverImageProcessor, CoverImageProcessor>();
+        services.AddSingleton<ICoverSource, HttpCoverSource>();
+        services.AddHttpClient(HttpCoverSource.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddSingleton<CoverJanitor>();
+        services.AddHostedService(sp => sp.GetRequiredService<CoverJanitor>());
         services.AddSingleton<IBookSearch, PostgresBookSearch>();
 
         services.AddValidatorsFromAssemblyContaining<SignupRequestValidator>();

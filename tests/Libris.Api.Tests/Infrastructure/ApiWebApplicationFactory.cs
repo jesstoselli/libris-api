@@ -38,6 +38,9 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
         _configurationOverrides = configurationOverrides;
     }
 
+    /// <summary>Per-factory directory so cover tests never touch /data/covers or each other.</summary>
+    public string CoversPath { get; } = Path.Combine(Path.GetTempPath(), "libris-covers-" + Guid.NewGuid().ToString("N"));
+
     public static ApiWebApplicationFactory Create(IReadOnlyDictionary<string, string?> configurationOverrides)
     {
         return new ApiWebApplicationFactory(configurationOverrides);
@@ -52,6 +55,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
             var settings = new Dictionary<string, string?>(TestConfiguration, StringComparer.Ordinal)
             {
                 ["ConnectionStrings:Postgres"] = _database.GetConnectionString(),
+                ["Covers:Path"] = CoversPath,
             };
 
             foreach (var item in _configurationOverrides)
@@ -82,6 +86,10 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
         finally
         {
             await _database.DisposeAsync();
+            if (Directory.Exists(CoversPath))
+            {
+                Directory.Delete(CoversPath, recursive: true);
+            }
         }
     }
 }

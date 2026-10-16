@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Libris.Application.Dtos.Auth;
 
 namespace Libris.Api.Tests.Infrastructure;
@@ -23,7 +24,7 @@ public static class AuthTestClient
         return (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
     }
 
-    public static async Task<HttpClient> CreateAuthorizedClientAsync(ApiWebApplicationFactory factory)
+    public static async Task<HttpClient> CreateAuthorizedClientAsync(WebApplicationFactory<Program> factory)
     {
         ArgumentNullException.ThrowIfNull(factory);
 

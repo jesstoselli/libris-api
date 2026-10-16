@@ -3,6 +3,7 @@ using Libris.Application.Abstractions.Books;
 using Libris.Application.Abstractions.Persistence;
 using Libris.Application.Common;
 using Libris.Application.Dtos.Books;
+using Libris.Application.UseCases.Covers;
 using Libris.Application.UseCases.Genres;
 using Libris.Domain.Books;
 using Libris.Domain.Entities;
@@ -17,6 +18,7 @@ public class BookService
     private readonly IApplicationDbContext _db;
     private readonly GenreService _genres;
     private readonly IBookSearch _search;
+    private readonly CoverService _covers;
     private readonly IValidator<CreateBookRequest> _createValidator;
     private readonly IValidator<UpdateBookRequest> _updateValidator;
     private readonly IValidator<AcquireRequest> _acquireValidator;
@@ -25,6 +27,7 @@ public class BookService
         IApplicationDbContext db,
         GenreService genres,
         IBookSearch search,
+        CoverService covers,
         IValidator<CreateBookRequest> createValidator,
         IValidator<UpdateBookRequest> updateValidator,
         IValidator<AcquireRequest> acquireValidator)
@@ -32,6 +35,7 @@ public class BookService
         _db = db;
         _genres = genres;
         _search = search;
+        _covers = covers;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
         _acquireValidator = acquireValidator;
@@ -89,6 +93,11 @@ public class BookService
             return OperationResult.Fail<BookDto>(isbn.ErrorCode!, isbn.ErrorMessage!);
         }
 
+        if (request.CoverId is { } coverId && !await _covers.BelongsToAsync(userId, coverId, ct))
+        {
+            return CoverNotFound();
+        }
+
         var now = DateTime.UtcNow;
         var owned = request.Ownership == BookOwnership.Owned;
         var book = new Book
@@ -142,6 +151,12 @@ public class BookService
             return OperationResult.Fail<BookDto>(isbn.ErrorCode!, isbn.ErrorMessage!);
         }
 
+        var previousCoverId = book.CoverId;
+        if (request.CoverId is { } coverId && coverId != previousCoverId && !await _covers.BelongsToAsync(userId, coverId, ct))
+        {
+            return CoverNotFound();
+        }
+
         ApplyFields(book, request.Title, request.Authors, isbn.Value, request.TotalPages, request.Publisher,
             request.PublishedYear, request.Synopsis, request.CoverId, DateTime.UtcNow);
         book.StartedAt = request.StartedAt;
@@ -153,6 +168,13 @@ public class BookService
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (previousCoverId is { } replaced && replaced != book.CoverId)
+        {
+            await _covers.RemoveAsync(replaced, ct);
+            await _db.SaveChangesAsync(ct);
+        }
+
         return OperationResult.Ok(ToDto(book));
     }
 
@@ -165,6 +187,11 @@ public class BookService
         }
 
         _db.Books.Remove(book);
+        if (book.CoverId is { } coverId)
+        {
+            await _covers.RemoveAsync(coverId, ct);
+        }
+
         await _db.SaveChangesAsync(ct);
         return OperationResult.Ok(true);
     }
@@ -305,6 +332,9 @@ public class BookService
     private const string NotFoundMessage = "Livro não encontrado.";
 
     private static OperationResult<BookDto> NotFound() => OperationResult.Fail<BookDto>("not_found", NotFoundMessage);
+
+    private static OperationResult<BookDto> CoverNotFound() =>
+        OperationResult.Fail<BookDto>("cover_not_found", "Capa não encontrada.");
 
     private static OperationResult<BookDto> NotOwned() =>
         OperationResult.Fail<BookDto>("not_owned", "Livro da wishlist não tem situação de leitura.");
