@@ -9,6 +9,7 @@ using Libris.Application.UseCases.Auth;
 using Libris.Application.UseCases.Genres;
 using Libris.Application.UseCases.Books;
 using Libris.Application.UseCases.Reading;
+using Libris.Application.UseCases.Stats;
 using Libris.Application.UseCases.Covers;
 using Libris.Application.Abstractions.Covers;
 using Libris.Infrastructure.Covers;
@@ -60,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<GenreService>();
         services.AddScoped<BookService>();
         services.AddScoped<ReadingLogService>();
+        services.AddScoped<StatsService>();
 
         services.Configure<CoverOptions>(configuration.GetSection(CoverOptions.SectionName));
         services.AddScoped<CoverService>();
