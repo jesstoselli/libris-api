@@ -40,6 +40,8 @@ public static class HttpResults
             "already_owned" => StatusCodes.Status409Conflict,
             "image_too_large" => StatusCodes.Status413PayloadTooLarge,
             "download_failed" => StatusCodes.Status502BadGateway,
+            "isbn_not_found" => StatusCodes.Status404NotFound,
+            "isbn_lookup_unavailable" => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status400BadRequest,
         };
 

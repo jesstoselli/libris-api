@@ -12,6 +12,9 @@ using Libris.Application.UseCases.Reading;
 using Libris.Application.UseCases.Covers;
 using Libris.Application.Abstractions.Covers;
 using Libris.Infrastructure.Covers;
+using Libris.Infrastructure.Isbn;
+using Libris.Application.Abstractions.Isbn;
+using Libris.Application.UseCases.IsbnLookup;
 using Libris.Application.Abstractions.Books;
 using Libris.Infrastructure.Books;
 using Libris.Application.Validators.Auth;
@@ -65,6 +68,25 @@ public static class DependencyInjection
         services.AddSingleton<ICoverSource, HttpCoverSource>();
         services.AddHttpClient(HttpCoverSource.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10));
         services.AddSingleton<CoverJanitor>();
+
+        services.Configure<IsbnOptions>(configuration.GetSection(IsbnOptions.SectionName));
+        const string userAgent = "Libris/1.0 (personal use)";
+        services.AddHttpClient<OpenLibraryIsbnSource>(client =>
+        {
+            client.BaseAddress = new Uri("https://openlibrary.org/");
+            client.Timeout = TimeSpan.FromSeconds(8);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+        });
+        services.AddHttpClient<GoogleBooksIsbnSource>(client =>
+        {
+            client.BaseAddress = new Uri("https://www.googleapis.com/books/v1/");
+            client.Timeout = TimeSpan.FromSeconds(8);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+        });
+        // Order is priority: Open Library first, Google Books only fills what is missing.
+        services.AddTransient<IIsbnSource>(sp => sp.GetRequiredService<OpenLibraryIsbnSource>());
+        services.AddTransient<IIsbnSource>(sp => sp.GetRequiredService<GoogleBooksIsbnSource>());
+        services.AddScoped<IsbnLookupService>();
         services.AddHostedService(sp => sp.GetRequiredService<CoverJanitor>());
         services.AddSingleton<IBookSearch, PostgresBookSearch>();
 

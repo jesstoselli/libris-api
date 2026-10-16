@@ -124,6 +124,7 @@ app.MapGenresEndpoints();
 app.MapBooksEndpoints();
 app.MapReadingLogsEndpoints();
 app.MapCoversEndpoints();
+app.MapIsbnEndpoints();
 
 await app.RunAsync();
 

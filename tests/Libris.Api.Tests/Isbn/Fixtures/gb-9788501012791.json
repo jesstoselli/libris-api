@@ -1,0 +1,23 @@
+{
+  "kind": "books#volumes",
+  "totalItems": 1,
+  "items": [
+    {
+      "kind": "books#volume",
+      "id": "Rz8xAAAACAAJ",
+      "volumeInfo": {
+        "title": "O nome da rosa",
+        "authors": ["Umberto Eco"],
+        "publisher": "Record",
+        "publishedDate": "1983",
+        "description": "Itália, 1327. Uma abadia beneditina e uma série de mortes misteriosas.",
+        "pageCount": 562,
+        "categories": ["Fiction"],
+        "imageLinks": {
+          "thumbnail": "http://books.google.com/books/content?id=Rz8xAAAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+        },
+        "language": "pt-BR"
+      }
+    }
+  ]
+}

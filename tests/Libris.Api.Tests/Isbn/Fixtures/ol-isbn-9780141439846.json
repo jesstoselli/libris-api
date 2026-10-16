@@ -1,0 +1,101 @@
+{
+ "title": "Dracula",
+ "authors": [
+  {
+   "key": "/authors/OL31727A"
+  }
+ ],
+ "publish_date": "2003",
+ "publishers": [
+  "Penguin Books"
+ ],
+ "weight": "12.4 ounces",
+ "covers": [
+  10541361,
+  -1
+ ],
+ "physical_format": "Paperback",
+ "subjects": [
+  "Chinese",
+  "Education / Bilingual Education",
+  "Foreign Language Study / Chinese",
+  "Foreign Language Study",
+  "Foreign Language - Dictionaries / Phrase Books",
+  "Language"
+ ],
+ "source_records": [
+  "amazon:0497900726",
+  "ia:dracula0000stok_z0y3",
+  "marc:marc_columbia/Columbia-extract-20221130-009.mrc:200868027:1717",
+  "idb:9780141439846",
+  "marc:harvard_bibliographic_metadata/ab.bib.09.20150123.full.mrc:232847656:1208"
+ ],
+ "languages": [
+  {
+   "key": "/languages/eng"
+  }
+ ],
+ "type": {
+  "key": "/type/edition"
+ },
+ "physical_dimensions": "7.7 x 5 x 1 inches",
+ "copyright_date": "May 26, 1897",
+ "isbn_13": [
+  "9780141439846"
+ ],
+ "isbn_10": [
+  "014143984X"
+ ],
+ "oclc_numbers": [
+  "1140460839",
+  "51870466"
+ ],
+ "contributors": [
+  {
+   "name": "Maurice Hindle",
+   "role": "Editor"
+  },
+  {
+   "role": "Introduction",
+   "name": "Maurice Hindle"
+  },
+  {
+   "role": "Notes by",
+   "name": "Maurice Hindle"
+  },
+  {
+   "role": "Preface",
+   "name": "Christopher Frayling"
+  }
+ ],
+ "series": [
+  "Penguin Classics"
+ ],
+ "edition_name": "Rev. ed.",
+ "publish_places": [
+  "London, UK"
+ ],
+ "ocaid": "dracula0000stok_z0y3",
+ "key": "/books/OL10416488M",
+ "works": [
+  {
+   "key": "/works/OL85892W"
+  }
+ ],
+ "lccn": [
+  "2003269578"
+ ],
+ "lc_classifications": [
+  "PR6037.T617 D7 2003"
+ ],
+ "latest_revision": 14,
+ "revision": 14,
+ "created": {
+  "type": "/type/datetime",
+  "value": "2008-04-30T09:38:13.731961"
+ },
+ "last_modified": {
+  "type": "/type/datetime",
+  "value": "2024-09-15T22:15:57.663185"
+ }
+}
