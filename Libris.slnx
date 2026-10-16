@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Libris.Api/Libris.Api.csproj" />
+    <Project Path="src/Libris.Application/Libris.Application.csproj" />
+    <Project Path="src/Libris.Domain/Libris.Domain.csproj" />
+    <Project Path="src/Libris.Infrastructure/Libris.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Libris.Api.Tests/Libris.Api.Tests.csproj" />
+    <Project Path="tests/Libris.Domain.Tests/Libris.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

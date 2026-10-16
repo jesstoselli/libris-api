@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: libris-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: libris
+      POSTGRES_USER: libris
+      POSTGRES_PASSWORD: libris_dev
+    ports:
+      # 5432 = BillFolder dev, 5433 = Verto dev.
+      - "5434:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U libris -d libris"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_dev_data:
+    name: libris_postgres_dev_data
