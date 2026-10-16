@@ -44,8 +44,8 @@ Mais a **Wishlist**: livros que eu ainda não tenho e quero comprar.
 
 Referências guardadas em `docs/design/`:
 - `mock-original.webp`: mock validado (Acervo, Ficha, Registrar Livro).
-- `telas-v3.html`: rascunho aprovado das telas que faltavam (Acervo com filtros, Ficha com registro de leitura, Números), já no **modo escuro**. Para abrir no navegador, o `damask-bg-forest.svg` precisa estar na mesma pasta. (`telas-v2.html` é a versão clara anterior, só como histórico.)
-- `damask-bg-forest.svg`: textura adamascada do fundo, recolorida em verdes (`#3E3820` → `#675B31`). `damask-bg.svg` é a original em tons de bege.
+- `telas-v4.html`: rascunho aprovado das telas que faltavam (Acervo com filtros, Ficha com registro de leitura, Números), no **modo escuro** com o fundo final. Para abrir no navegador, o `libris-ledger-bg.svg` precisa estar na mesma pasta. (`telas-v2.html` e `telas-v3.html` são versões anteriores, só como histórico.)
+- `libris-ledger-bg.svg`: **fundo final** da mesa, uma textura de livro-razão verde-oliva escura com grade. `damask-bg.svg` e `damask-bg-forest.svg` são tentativas anteriores, só como histórico.
 
 **Tokens (paleta "A Gathering of Spooks")**
 
@@ -55,8 +55,8 @@ Referências guardadas em `docs/design/`:
 | `vampire-venom` | `#6B0302` | títulos, ações principais, carimbo ativo |
 | `pumpkin-poison` | `#C55B31` | detalhes: tags, barra de progresso, gráfico |
 | `eye-of-the-wolf` | `#DA8825` | detalhes: tags |
-| `haunted-forest` | `#675B31` | mesa (tom claro do damasco), ícones da fita, tags |
-| `forest-deep` | `#3E3820` | mesa (tom escuro do damasco, cor de base) |
+| `haunted-forest` | `#675B31` | ícones da fita, tags |
+| `forest-deep` | `#3E3820` | cor de base da mesa (por trás do `libris-ledger-bg.svg`) |
 
 Papel das fichas: um tom mais claro que o fundo (no rascunho, `#F7E7CC`), com sombra rígida deslocada (sem blur).
 
@@ -64,10 +64,10 @@ Papel das fichas: um tom mais claro que o fundo (no rascunho, `#F7E7CC`), com so
 
 **Decisões já tomadas**
 - **Sem capitular** ou letra iluminada: os títulos são texto normal em Aleo ("Acervo de leituras", "Números de 2026"), sem caixa-alta forçada.
-- **Mesa escura**: o fundo é verde (damasco recolorido) e as fichas de papel continuam claras por cima. Textos que ficam direto sobre a mesa (títulos de página, subtítulos, filtros de gênero/busca) usam `ghoulish-ale`; textos dentro das fichas continuam em `vampire-venom`/tinta.
+- **Mesa escura**: o fundo é o livro-razão verde-oliva (`libris-ledger-bg.svg`) e as fichas de papel continuam claras por cima. Textos que ficam direto sobre a mesa (títulos de página, subtítulos, filtros de gênero/busca) usam `ghoulish-ale`; textos dentro das fichas continuam em `vampire-venom`/tinta.
 - Navegação por uma **fita de tecido** vertical à esquerda (bege `ghoulish-ale`, com ponta em V), com ícone e rótulo em `haunted-forest` e o item ativo em `vampire-venom`: **Acervo · Wishlist · Números · Registrar**.
 - Situação do livro aparece como **carimbo** (borda grossa, leve rotação), tanto no filtro quanto na ficha.
-- O fundo é o `damask-bg-forest.svg` repetido, sem blend, sobre `forest-deep`.
+- O fundo é o `libris-ledger-bg.svg` repetido (tile de 512×512), sem blend, sobre `forest-deep`.
 
 ## Domínio
 

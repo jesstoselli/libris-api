@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Libris — telas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Aleo:wght@400;600;700;800&family=Yantramanav:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ale:#E7BC89; --venom:#6B0302; --pumpkin:#C55B31; --wolf:#DA8825; --forest:#675B31;
+    --paper:#F3DDBA; --paper-2:#F7E7CC; --ink:#3A1E12; --ink-soft:#6E4A35; --rule:#C9A47A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#1b1512;color:var(--ink);font-family:Yantramanav,sans-serif;font-weight:400}
+  .intro{max-width:1180px;margin:28px auto 8px;padding:0 20px;color:#ecd9bd}
+  .intro h1{font-family:Aleo,serif;font-weight:700;margin:0 0 6px;font-size:26px}
+  .intro p{margin:4px 0;font-weight:300;font-size:16px;line-height:1.45}
+  .intro b{font-weight:500;color:#fff}
+
+  .window{max-width:1180px;margin:22px auto;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .titlebar{height:30px;background:#2a221d;display:flex;align-items:center;gap:7px;padding:0 12px}
+  .titlebar i{width:12px;height:12px;border-radius:50%;display:block}
+  .titlebar span{color:#a99682;font-size:12px;margin-left:10px}
+  .desk{position:relative;display:flex;min-height:620px;background:#3E3820 url(libris-ledger-bg.svg) repeat;background-size:360px}
+  
+
+  /* ribbon */
+  .ribbon{position:relative;z-index:1;width:64px;margin-left:22px;background:var(--ale);display:flex;flex-direction:column;align-items:center;gap:22px;padding:26px 0 70px;
+    clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 34px),0 100%);align-self:flex-start;min-height:430px;box-shadow:inset -6px 0 0 rgba(90,50,20,.18)}
+  .rib{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--forest);font-size:10px;letter-spacing:.04em;text-transform:uppercase;opacity:.75}
+  .rib.on{opacity:1;color:var(--venom)}
+  .rib svg{width:24px;height:24px}
+  
+
+  .main{position:relative;z-index:1;flex:1;padding:28px 34px 34px}
+  .heading{display:flex;align-items:center;gap:14px}
+  .cap{width:76px;height:76px;border:3px double var(--venom);display:grid;place-items:center;font-family:Aleo,serif;font-weight:800;font-size:58px;color:var(--venom);background:rgba(243,221,186,.6)}
+  .heading h2{font-family:Aleo,serif;font-weight:800;font-size:34px;color:var(--ale);margin:0;letter-spacing:0;line-height:1}
+  .heading small{display:block;font-family:Yantramanav;font-weight:300;font-size:15px;color:#E9D3B0;letter-spacing:.04em;margin-top:6px}
+
+  /* filters */
+  .filters{margin:22px 0 18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .stamp{font-family:Aleo,serif;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.06em;padding:5px 11px;border:2px solid currentColor;border-radius:3px;color:var(--ink-soft);background:rgba(247,231,204,.92);transform:rotate(-1deg)}
+  .stamp:nth-child(even){transform:rotate(1deg)}
+  .stamp.on{color:var(--paper-2);background:var(--venom);border-color:var(--ale)}
+  .sep{width:1px;height:26px;background:var(--rule);margin:0 4px}
+  .select{font-size:14px;padding:6px 12px;border-bottom:1px solid var(--ale);color:var(--ale);background:transparent}
+  .search{flex:1;min-width:180px;font-size:14px;font-weight:300;padding:6px 4px;border-bottom:1px solid rgba(231,188,137,.5);color:#D9C29E}
+
+  /* cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
+  .card{position:relative;background:var(--paper-2);display:flex;gap:14px;padding:14px 16px 16px;box-shadow:5px 5px 0 rgba(90,50,20,.28)}
+  .card::after{content:"";position:absolute;top:0;right:0;border-width:0 16px 16px 0;border-style:solid;border-color:#1b1512 transparent rgba(150,110,70,.35) transparent;opacity:.0}
+  .cover{width:70px;height:104px;flex:none;display:flex;align-items:flex-end;padding:6px;color:#f5e3c6;font-family:Aleo,serif;font-size:10px;line-height:1.1;box-shadow:2px 2px 0 rgba(0,0,0,.25)}
+  .card h4{font-family:Aleo,serif;font-weight:700;font-size:18px;margin:0;color:var(--venom);line-height:1.15}
+  .meta{font-size:14px;color:var(--ink-soft);margin:2px 0}
+  .bar{height:6px;background:rgba(103,91,49,.2);margin:8px 0 4px}
+  .bar b{display:block;height:100%;background:var(--pumpkin)}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;color:#fff;margin-right:4px;border-radius:2px}
+  .quick{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+  .quick .in{width:54px;border-bottom:1.5px solid var(--venom);font-weight:500;color:var(--venom);text-align:center}
+  .quick .btn{font-family:Aleo,serif;font-size:12px;background:var(--venom);color:var(--paper-2);padding:3px 9px}
+  .seal{position:absolute;right:12px;bottom:10px;font-family:Aleo,serif;font-weight:700;font-size:11px;letter-spacing:.08em;padding:2px 7px;border:2px solid;transform:rotate(-6deg);opacity:.85}
+
+  /* ficha */
+  .ficha-wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:26px}
+  .sheet{background:var(--paper-2);padding:24px 26px;box-shadow:6px 6px 0 rgba(90,50,20,.28),12px 12px 0 rgba(243,221,186,.9),14px 14px 0 rgba(90,50,20,.2)}
+  .sheet h3{font-family:Aleo,serif;color:var(--venom);margin:0;font-size:15px;text-transform:uppercase;letter-spacing:.1em}
+  .sheet .t{font-family:Aleo,serif;font-weight:800;color:var(--venom);font-size:28px;line-height:1.05;margin:4px 0}
+  .ornament{text-align:center;color:var(--rule);letter-spacing:6px;margin:16px 0}
+  .field{display:flex;align-items:flex-end;gap:10px;margin:12px 0}
+  .field label{font-size:13px;color:var(--ink-soft);width:110px}
+  .field .line{flex:1;border-bottom:1px solid var(--ink-soft);font-size:17px;padding:2px 2px;color:var(--ink)}
+  .field .line.big{font-family:Aleo,serif;font-weight:700;font-size:24px;color:var(--venom)}
+  .cta{display:block;text-align:center;background:var(--venom);color:var(--paper-2);font-family:Aleo,serif;font-size:16px;letter-spacing:.08em;padding:10px;margin-top:16px;text-transform:uppercase}
+  table.log{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  .log td{padding:6px 4px;border-bottom:1px dashed var(--rule)}
+  .log td:last-child{text-align:right;color:var(--forest);font-weight:500}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:20px 0}
+  .kpi{background:var(--paper-2);padding:14px 18px;box-shadow:5px 5px 0 rgba(90,50,20,.28)}
+  .kpi .n{font-family:Aleo,serif;font-weight:800;font-size:38px;color:var(--venom);line-height:1}
+  .kpi .l{font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+  .chart{background:var(--paper-2);padding:18px 22px 12px;box-shadow:5px 5px 0 rgba(90,50,20,.28)}
+  .bars{display:flex;align-items:flex-end;gap:10px;height:170px;border-bottom:1.5px solid var(--ink-soft);padding:0 4px}
+  .bars div{flex:1;background:var(--pumpkin);position:relative}
+  .bars div.sel{background:var(--venom)}
+  .bars div span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--ink-soft)}
+  .months{display:flex;gap:10px;padding:4px 4px 0;font-size:12px;color:var(--ink-soft)}
+  .months span{flex:1;text-align:center}
+  .monthlist{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+
+  .note{max-width:1180px;margin:0 auto 6px;padding:0 20px;color:#ecd9bd;font-weight:300;font-size:15px}
+  .note b{color:#FFD99A;font-weight:500}
+  .options{max-width:1180px;margin:0 auto 40px;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .option{background:#2a221d;color:#ecd9bd;border:2px solid #3d322b;border-radius:10px;padding:14px 16px;cursor:pointer}
+  .option.selected{border-color:var(--wolf);background:#352a22}
+  .option h3{margin:0 0 4px;font-family:Aleo,serif;color:#FFD99A}
+  .option p{margin:0;font-weight:300;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Libris · telas, v4 (fundo ledger)</h1>
+  <p>São três telas, todas no estilo do seu mock. Não precisa olhar pixel por pixel, o que importa aqui é <b>o que tem em cada tela e onde fica cada coisa</b>.</p>
+  <p>Fita lateral (palpite meu): <b>Acervo · Wishlist · Estatísticas</b>, com <b>+ Registrar</b> no fim.</p>
+</div>
+
+<!-- ===================== 1. ACERVO ===================== -->
+<div class="window">
+  <div class="titlebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>1 · Acervo, filtrado em "Lendo"</span></div>
+  <div class="desk">
+    <nav class="ribbon">
+      <div class="rib on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5v14c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/></svg>Acervo</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12v20l-6-5-6 5z"/></svg>Wishlist</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 20V10h3v10zm6.5 0V4h3v16zM17 20v-7h3v7z"/></svg>Números</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>Registrar</div>
+    </nav>
+    <div class="main">
+      <div class="heading"><div><h2>Acervo de leituras</h2><small>42 livros no acervo · 3 em leitura</small></div></div>
+
+      <div class="filters">
+        <span class="stamp">Todos</span>
+        <span class="stamp">Não iniciado</span>
+        <span class="stamp on">Lendo</span>
+        <span class="stamp">Lido</span>
+        <span class="stamp">Abandonado</span>
+        <span class="sep"></span>
+        <span class="select">Gênero: todos ▾</span>
+        <span class="search">⌕ título ou autor…</span>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="cover" style="background:#8a1f14">O Nome da Rosa</div>
+          <div style="flex:1">
+            <h4>O Nome da Rosa</h4>
+            <div class="meta">Umberto Eco</div>
+            <div class="meta">pág. 112 de 512 · 22%</div>
+            <div class="bar"><b style="width:22%"></b></div>
+            <span class="tag" style="background:var(--forest)">mistério</span><span class="tag" style="background:var(--wolf)">histórico</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cover" style="background:#2b2b33">Drácula</div>
+          <div style="flex:1">
+            <h4>Drácula</h4>
+            <div class="meta">Bram Stoker</div>
+            <div class="meta">pág. 301 de 418 · 72%</div>
+            <div class="bar"><b style="width:72%"></b></div>
+            <span class="tag" style="background:var(--pumpkin)">terror</span><span class="tag" style="background:var(--forest)">gótico</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="cover" style="background:#4d5a3a">A Assombração da Casa da Colina</div>
+          <div style="flex:1">
+            <h4>A Assombração da Casa da Colina</h4>
+            <div class="meta">Shirley Jackson</div>
+            <div class="meta">pág. 34 de 246 · 14%</div>
+            <div class="bar"><b style="width:14%"></b></div>
+            <span class="tag" style="background:var(--pumpkin)">terror</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 2. FICHA ===================== -->
+<div class="window">
+  <div class="titlebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>2 · Ficha do livro (abre ao clicar num card)</span></div>
+  <div class="desk">
+    <nav class="ribbon">
+      <div class="rib on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5v14c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/></svg>Acervo</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12v20l-6-5-6 5z"/></svg>Wishlist</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 20V10h3v10zm6.5 0V4h3v16zM17 20v-7h3v7z"/></svg>Números</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>Registrar</div>
+    </nav>
+    <div class="main">
+      <div class="ficha-wrap">
+        <div class="sheet">
+          <div style="display:flex;gap:18px">
+            <div class="cover" style="background:#8a1f14;width:120px;height:178px;font-size:14px">UMBERTO ECO<br>O Nome da Rosa</div>
+            <div>
+              <h3>Ficha</h3>
+              <div class="t">O Nome da Rosa</div>
+              <div class="meta">de Umberto Eco · Record, 1980 · 512 págs.</div>
+              <div style="margin:8px 0"><span class="tag" style="background:var(--forest)">mistério</span><span class="tag" style="background:var(--wolf)">histórico</span></div>
+              <p style="font-weight:300;font-size:14px;line-height:1.45;margin:6px 0 0">Itália, 1327. Uma abadia beneditina, uma série de mortes misteriosas e um frade franciscano disposto a investigar…</p>
+            </div>
+          </div>
+          <div class="ornament">❦ ─── ❦ ─── ❦</div>
+          <div class="meta">Progresso · pág. 140 de 512 (27%)</div>
+          <div class="bar" style="height:9px"><b style="width:27%"></b></div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <span class="stamp" style="color:var(--pumpkin)">Não iniciado</span>
+            <span class="stamp on">Lendo</span>
+            <span class="stamp" style="color:var(--forest)">Lido</span>
+            <span class="stamp" style="color:var(--ink-soft)">Abandonado</span>
+          </div>
+          <div class="meta" style="margin-top:12px">Início: 02/10/2026 · Término: —  <span style="color:var(--venom)">✎ editar datas</span></div>
+        </div>
+
+        <div class="sheet">
+          <h3>Registrar leitura</h3>
+          <div class="field"><label>Parei na página</label><div class="line big">140</div></div>
+          <div class="field"><label>Data</label><div class="line">hoje, 16/10/2026</div></div>
+          <span class="cta">Anotar</span>
+          <div class="ornament">❦</div>
+          <h3>Histórico</h3>
+          <table class="log">
+            <tr><td>14/10</td><td>pág. 86 → 112</td><td>+26</td></tr>
+            <tr><td>11/10</td><td>pág. 51 → 86</td><td>+35</td></tr>
+            <tr><td>06/10</td><td>pág. 20 → 51</td><td>+31</td></tr>
+            <tr><td>02/10</td><td>início → 20</td><td>+20</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 3. ESTATÍSTICAS ===================== -->
+<div class="window">
+  <div class="titlebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>3 · Números do ano (outubro selecionado)</span></div>
+  <div class="desk">
+    <nav class="ribbon">
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5v14c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/></svg>Acervo</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12v20l-6-5-6 5z"/></svg>Wishlist</div>
+      <div class="rib on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 20V10h3v10zm6.5 0V4h3v16zM17 20v-7h3v7z"/></svg>Números</div>
+      <div class="rib"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></svg>Registrar</div>
+    </nav>
+    <div class="main">
+      <div class="heading"><div><h2>Números de 2026</h2><small>‹ 2025 &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; 2027 ›</small></div></div>
+
+      <div class="stats">
+        <div class="kpi"><div class="n">17</div><div class="l">livros terminados no ano</div></div>
+        <div class="kpi"><div class="n">5.842</div><div class="l">páginas lidas no ano</div></div>
+        <div class="kpi"><div class="n">3</div><div class="l">em leitura agora</div></div>
+      </div>
+
+      <div class="chart">
+        <div class="meta" style="margin-bottom:22px">Páginas lidas por mês · clique num mês pra ver o detalhe</div>
+        <div class="bars">
+          <div style="height:45%"><span>480</span></div><div style="height:62%"><span>660</span></div><div style="height:38%"><span>410</span></div>
+          <div style="height:70%"><span>750</span></div><div style="height:55%"><span>590</span></div><div style="height:30%"><span>320</span></div>
+          <div style="height:85%"><span>910</span></div><div style="height:60%"><span>640</span></div><div style="height:48%"><span>515</span></div>
+          <div class="sel" style="height:52%"><span>566</span></div><div style="height:0"></div><div style="height:0"></div>
+        </div>
+        <div class="months"><span>jan</span><span>fev</span><span>mar</span><span>abr</span><span>mai</span><span>jun</span><span>jul</span><span>ago</span><span>set</span><span><b style="color:var(--venom)">out</b></span><span>nov</span><span>dez</span></div>
+      </div>
+
+      <div class="monthlist">
+        <div class="sheet" style="box-shadow:5px 5px 0 rgba(90,50,20,.28)">
+          <h3>Terminados em outubro · 2</h3>
+          <table class="log">
+            <tr><td>Frankenstein</td><td>Mary Shelley</td><td>08/10</td></tr>
+            <tr><td>Carmilla</td><td>J. S. Le Fanu</td><td>03/10</td></tr>
+          </table>
+        </div>
+        <div class="sheet" style="box-shadow:5px 5px 0 rgba(90,50,20,.28)">
+          <h3>Andaram em outubro · 566 págs.</h3>
+          <table class="log">
+            <tr><td>Drácula</td><td>+214</td></tr>
+            <tr><td>O Nome da Rosa</td><td>+140</td></tr>
+            <tr><td>Frankenstein</td><td>+132</td></tr>
+            <tr><td>outros 2 livros</td><td>+80</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
