@@ -119,6 +119,7 @@ app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapGenresEndpoints();
 app.MapBooksEndpoints();
+app.MapReadingLogsEndpoints();
 
 await app.RunAsync();
 
