@@ -39,11 +39,11 @@ Os secrets do GitHub não podem ser lidos de volta (nem os do BillFolder): os va
 
 Painel → `billfolder.app` → **DNS → Records → Add record**:
 
-| Campo | Valor |
-|---|---|
-| Type | `A` |
-| Name | `libris-api` |
-| IPv4 | `178.104.160.8` |
+| Campo        | Valor                                               |
+| ------------ | --------------------------------------------------- |
+| Type         | `A`                                                 |
+| Name         | `libris-api`                                        |
+| IPv4         | `178.104.160.8`                                     |
 | Proxy status | **DNS only** (nuvem cinza, igual ao registro `api`) |
 
 DNS only é o que deixa o `certbot` (passo 5) emitir o certificado direto na VPS.
@@ -258,7 +258,15 @@ tar tzf /opt/billfolder/backups/libris-covers-$(date +%F).tgz | head
 
 Esperado: os dois arquivos do dia; **8** tabelas (`users`, `refresh_tokens`, `books`, `genres`, `book_genres`, `reading_logs`, `covers`, `__EFMigrationsHistory`); e a lista de `.webp` das capas (vazia até a primeira capa).
 
-### Restaurar as capas
+### Restaurar as capas (só em emergência)
+
+**Não faz parte da instalação.** Use só se as capas se perderem (VPS nova, volume apagado). Roda na VPS. Primeiro veja quais backups existem:
+
+```bash
+ls /opt/billfolder/backups/libris-covers-*
+```
+
+Depois restaure, trocando `AAAA-MM-DD` pela data de um dos arquivos listados:
 
 ```bash
 docker run --rm -v billfolder_libris_covers:/c -v /opt/billfolder/backups:/b alpine tar xzf /b/libris-covers-AAAA-MM-DD.tgz -C /c
