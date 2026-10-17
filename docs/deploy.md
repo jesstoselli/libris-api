@@ -271,3 +271,24 @@ Depois restaure, trocando `AAAA-MM-DD` pela data de um dos arquivos listados:
 ```bash
 docker run --rm -v billfolder_libris_covers:/c -v /opt/billfolder/backups:/b alpine tar xzf /b/libris-covers-AAAA-MM-DD.tgz -C /c
 ```
+
+## 9. Chave do Google Books (VPS)
+
+Sem chave, a busca por ISBN usa a cota anônima do Google Books, que vive esgotada (`429`). Quando a Open Library também não tem o livro (comum em edições brasileiras), a API responde "A busca por ISBN está indisponível agora."
+
+1. No [Google Cloud Console](https://console.cloud.google.com/), num projeto próprio (ex.: `libris`): **APIs e serviços → Biblioteca → Books API → Ativar**.
+2. **Credenciais → Criar credenciais → Chave de API**, depois **Editar**:
+   - **Restrições de API:** só **Books API**;
+   - **Restrições de aplicativo → Endereços IP:** `178.104.160.8` **e** `2a01:4f8:1c19:dcd6::/64`. A VPS sai pela internet por IPv6; só com o IPv4, o Google responde `API_KEY_IP_ADDRESS_BLOCKED`.
+3. Na VPS:
+
+```bash
+cd /opt/billfolder && read -s -p "Chave do Google Books: " KEY && echo && echo "LIBRIS_GOOGLE_BOOKS_KEY=$KEY" >> .env && unset KEY
+docker compose up -d --no-deps libris-api
+```
+
+Verificar (não imprime a chave): `docker compose exec libris-api printenv Isbn__GoogleBooksApiKey | tr -d '\n' | wc -c` → ~39. E a chamada direta, que deve trazer `"totalItems"` e não `"error"`:
+
+```bash
+KEY=$(grep '^LIBRIS_GOOGLE_BOOKS_KEY=' .env | tail -1 | cut -d= -f2-); curl -s "https://www.googleapis.com/books/v1/volumes?q=isbn:9780156001311&key=$KEY" | head -c 300; echo; unset KEY
+```
