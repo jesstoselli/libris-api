@@ -130,6 +130,13 @@ public class GenreService
         return resolved;
     }
 
+    /// <summary>
+    /// Genres only come from books, so one no book uses (owned or wishlist) is removed. Called after a book
+    /// loses genres: an edit or a delete.
+    /// </summary>
+    public Task<int> DeleteUnusedAsync(Guid userId, CancellationToken ct = default) =>
+        _db.Genres.Where(g => g.UserId == userId && !g.Books.Any()).ExecuteDeleteAsync(ct);
+
     // Compared in memory: a user has a handful of genres, and Postgres lower() depends on the
     // server locale for accented letters ("Gótico" vs "GÓTICO").
     private async Task<Genre?> FindByNameAsync(Guid userId, string name, Guid? excludeId, CancellationToken ct)

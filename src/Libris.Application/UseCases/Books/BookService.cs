@@ -209,6 +209,7 @@ public class BookService
         }
 
         await _db.SaveChangesAsync(ct);
+        await _genres.DeleteUnusedAsync(userId, ct);
 
         if (previousCoverId is { } replaced && replaced != book.CoverId)
         {
@@ -234,6 +235,7 @@ public class BookService
         }
 
         await _db.SaveChangesAsync(ct);
+        await _genres.DeleteUnusedAsync(userId, ct);
         return OperationResult.Ok(true);
     }
 
