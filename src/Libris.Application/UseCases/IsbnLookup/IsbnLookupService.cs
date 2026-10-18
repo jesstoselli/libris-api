@@ -64,7 +64,8 @@ public class IsbnLookupService
             merged.Synopsis,
             merged.CoverUrl,
             GenreSuggestions.From(merged.Subjects),
-            string.Join('+', used)));
+            string.Join('+', used),
+            merged.Language));
     }
 
     private static IsbnCandidate Fill(IsbnCandidate primary, IsbnCandidate fallback) => new(
@@ -75,5 +76,6 @@ public class IsbnLookupService
         primary.PublishedYear ?? fallback.PublishedYear,
         primary.Synopsis ?? fallback.Synopsis,
         primary.CoverUrl ?? fallback.CoverUrl,
-        [.. primary.Subjects, .. fallback.Subjects]);
+        [.. primary.Subjects, .. fallback.Subjects],
+        primary.Language ?? fallback.Language);
 }

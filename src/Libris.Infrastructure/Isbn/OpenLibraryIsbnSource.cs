@@ -56,7 +56,10 @@ public sealed class OpenLibraryIsbnSource : IIsbnSource
                 CoverUrl(root),
                 work is not null && work.RootElement.TryGetProperty("subjects", out var subjects)
                     ? [.. subjects.EnumerateArray().Select(s => s.GetString()).OfType<string>()]
-                    : []));
+                    : [],
+                root.TryGetProperty("languages", out var languages) && languages.ValueKind == JsonValueKind.Array && languages.GetArrayLength() > 0
+                    ? LanguageCodes.FromOpenLibraryKey(String(languages[0], "key"))
+                    : null));
         }
         // Any failure, including catalogue JSON in an unexpected shape, makes this source "down" so the next one
         // still gets a chance; only the caller's own cancellation propagates.

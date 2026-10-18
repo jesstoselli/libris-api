@@ -23,7 +23,8 @@ public sealed record BookDto(
     DateOnly AddedAt,
     int CurrentPage,
     int Percent,
-    IReadOnlyList<BookFormat> Formats);
+    IReadOnlyList<BookFormat> Formats,
+    string Language);
 
 public sealed record CreateBookRequest(
     string Title,
@@ -43,7 +44,9 @@ public sealed record CreateBookRequest(
     // Optional so older clients keep working: absent means physical.
     IReadOnlyList<BookFormat>? Formats = null,
     // A book registered mid-read: becomes its first reading log, dated on the start date (or today).
-    int? CurrentPage = null);
+    int? CurrentPage = null,
+    // Optional so older clients keep working: absent means Portuguese.
+    string? Language = null);
 
 public sealed record UpdateBookRequest(
     string Title,
@@ -58,10 +61,12 @@ public sealed record UpdateBookRequest(
     DateOnly? StartedAt,
     DateOnly? FinishedAt,
     // Optional so older clients keep working: absent keeps the book's current formats.
-    IReadOnlyList<BookFormat>? Formats = null);
+    IReadOnlyList<BookFormat>? Formats = null,
+    // Absent keeps the book's current language.
+    string? Language = null);
 
 public sealed record ChangeStatusRequest(BookStatus Status, DateOnly Today);
 
 public sealed record AcquireRequest(DateOnly Today, int? TotalPages);
 
-public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null);
+public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null, string? Language = null);

@@ -8,7 +8,8 @@ public sealed record IsbnCandidate(
     int? PublishedYear,
     string? Synopsis,
     string? CoverUrl,
-    IReadOnlyList<string> Subjects);
+    IReadOnlyList<string> Subjects,
+    string? Language = null);
 
 public enum IsbnSourceStatus
 {

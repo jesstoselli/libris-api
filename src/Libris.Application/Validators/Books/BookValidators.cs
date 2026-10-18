@@ -34,6 +34,7 @@ public class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
             .WithMessage("Data de término não pode estar no futuro.");
 
         Include(new BookFormatsValidator<CreateBookRequest>(x => x.Formats));
+        Include(new BookLanguageValidator<CreateBookRequest>(x => x.Language));
 
         RuleFor(x => x.CurrentPage)
             .Null()
@@ -56,6 +57,7 @@ public class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
             x => x.Publisher, x => x.Genres, x => x.StartedAt, x => x.FinishedAt));
 
         Include(new BookFormatsValidator<UpdateBookRequest>(x => x.Formats));
+        Include(new BookLanguageValidator<UpdateBookRequest>(x => x.Language));
     }
 }
 
@@ -74,6 +76,23 @@ internal sealed class BookFormatsValidator<T> : AbstractValidator<T>
             .WithMessage("Formato inválido.")
             .OverridePropertyName("formats");
     }
+}
+
+/// <summary>An ISO 639-1 code ("pt", "en"); left out by older clients.</summary>
+internal sealed class BookLanguageValidator<T> : AbstractValidator<T>
+{
+    public BookLanguageValidator(Func<T, string?> language)
+    {
+        RuleFor(x => language(x))
+            .Must(BookLanguage.IsCode).When(x => language(x) is not null)
+            .WithMessage("Idioma inválido.")
+            .OverridePropertyName("language");
+    }
+}
+
+public static class BookLanguage
+{
+    public static bool IsCode(string? value) => value is { Length: 2 } && value.All(char.IsAsciiLetter);
 }
 
 public class AcquireRequestValidator : AbstractValidator<AcquireRequest>

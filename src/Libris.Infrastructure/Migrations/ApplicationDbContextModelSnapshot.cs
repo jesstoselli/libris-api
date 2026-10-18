@@ -71,6 +71,14 @@ namespace Libris.Infrastructure.Migrations
                         .HasColumnType("character varying(13)")
                         .HasColumnName("isbn");
 
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasDefaultValue("pt")
+                        .HasColumnName("language");
+
                     b.Property<string>("Ownership")
                         .IsRequired()
                         .HasMaxLength(20)

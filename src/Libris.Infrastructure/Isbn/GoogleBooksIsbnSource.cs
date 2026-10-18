@@ -52,7 +52,8 @@ public sealed class GoogleBooksIsbnSource : IIsbnSource
                 info.TryGetProperty("imageLinks", out var images) && String(images, "thumbnail") is { } thumbnail
                     ? thumbnail.Replace("http://", "https://", StringComparison.Ordinal)
                     : null,
-                Strings(info, "categories")));
+                Strings(info, "categories"),
+                LanguageCodes.FromTag(String(info, "language"))));
         }
         // Any failure, including catalogue JSON in an unexpected shape, makes this source "down" so the next one
         // still gets a chance; only the caller's own cancellation propagates.

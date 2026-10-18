@@ -10,4 +10,5 @@ public sealed record IsbnLookupDto(
     string? Synopsis,
     string? CoverUrl,
     IReadOnlyList<string> SuggestedGenres,
-    string Source);
+    string Source,
+    string? Language = null);

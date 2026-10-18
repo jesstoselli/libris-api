@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Libris.Api.Extensions;
 using Libris.Application.Dtos.Books;
 using Libris.Application.UseCases.Books;
+using Libris.Application.Validators.Books;
 using Libris.Domain.Enums;
 
 namespace Libris.Api.Endpoints;
@@ -18,6 +19,7 @@ public static class BooksEndpoints
             Guid? genreId,
             string? q,
             string? format,
+            string? language,
             ClaimsPrincipal principal,
             BookService books,
             CancellationToken ct) =>
@@ -29,12 +31,13 @@ public static class BooksEndpoints
 
             if (!QueryEnumParser.TryParse<BookOwnership>(ownership, out var parsedOwnership)
                 || !QueryEnumParser.TryParse<BookStatus>(status, out var parsedStatus)
-                || !QueryEnumParser.TryParse<BookFormat>(format, out var parsedFormat))
+                || !QueryEnumParser.TryParse<BookFormat>(format, out var parsedFormat)
+                || (language is not null && !BookLanguage.IsCode(language)))
             {
                 return Results.Json(new { error = "validation_error", message = "Filtro inválido." }, statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat);
+            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat, language);
             return HttpResults.ToHttpResult(await books.ListAsync(userId, query, ct));
         });
 

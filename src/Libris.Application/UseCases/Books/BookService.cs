@@ -53,6 +53,12 @@ public class BookService
             books = books.Where(b => b.Status == status);
         }
 
+        if (query.Language is { } language)
+        {
+            var code = language.ToLowerInvariant();
+            books = books.Where(b => b.Language == code);
+        }
+
         books = query.Format switch
         {
             BookFormat.Physical => books.Where(b => b.IsPhysical),
@@ -120,6 +126,7 @@ public class BookService
             CreatedAt = now,
         };
         book.SetFormats(request.Formats ?? [BookFormat.Physical]);
+        book.Language = (request.Language ?? "pt").ToLowerInvariant();
         ApplyFields(book, request.Title, request.Authors, isbn.Value, request.TotalPages, request.Publisher,
             request.PublishedYear, request.Synopsis, request.CoverId, now);
         foreach (var genre in await _genres.ResolveByNamesAsync(userId, request.Genres ?? [], ct))
@@ -188,6 +195,11 @@ public class BookService
         if (request.Formats is { } formats)
         {
             book.SetFormats(formats);
+        }
+
+        if (request.Language is { } language)
+        {
+            book.Language = language.ToLowerInvariant();
         }
 
         book.Genres.Clear();
@@ -301,7 +313,8 @@ public class BookService
             book.AddedAt,
             currentPage,
             ReadingProgress.Percent(currentPage, book.TotalPages),
-            book.Formats);
+            book.Formats,
+            book.Language);
     }
 
     public Task<Book?> FindAsync(Guid userId, Guid id, bool tracking, CancellationToken ct)

@@ -41,6 +41,7 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
             Source = "open_library",
         });
         result.Authors.Should().Equal("Umberto Eco");
+        result.Language.Should().Be("en", "Open Library's /languages/eng becomes the two-letter code");
         result.Publisher.Should().Be("Harcourt Brace");
         result.Synopsis.Should().NotBeNullOrWhiteSpace();
         result.CoverUrl.Should().StartWith("https://covers.openlibrary.org/b/id/").And.EndWith("-L.jpg");
@@ -332,4 +333,16 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
 
     private static async Task<string?> ErrorAsync(HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("error").GetString();
+
+    [Fact]
+    public async Task Lookup_GoogleRegionalLanguage_BecomesTheTwoLetterCode()
+    {
+        var google = new StubHandler(_ => Json(HttpStatusCode.OK, "gb-9788501012791.json"));
+        var openLibrary = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        using var client = await ClientAsync(openLibrary, google);
+
+        var result = await client.GetFromJsonAsync<IsbnLookupDto>("/v1/isbn/9788501012791", LibraryTestData.Json);
+
+        result!.Language.Should().Be("pt");
+    }
 }

@@ -27,6 +27,7 @@ public class BookConfiguration : IEntityTypeConfiguration<Book>
         builder.Property(x => x.IsPhysical).HasColumnName("is_physical").HasDefaultValue(true);
         builder.Property(x => x.IsDigital).HasColumnName("is_digital").HasDefaultValue(false);
         builder.Ignore(x => x.Formats);
+        builder.Property(x => x.Language).HasColumnName("language").HasMaxLength(2).IsRequired().HasDefaultValue("pt");
         builder.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20);
         builder.Property(x => x.StartedAt).HasColumnName("started_at");
         builder.Property(x => x.FinishedAt).HasColumnName("finished_at");

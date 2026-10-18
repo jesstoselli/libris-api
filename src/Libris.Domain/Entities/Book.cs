@@ -19,6 +19,9 @@ public class Book
     /// <summary>Formats are two flags rather than a list: a book can be both, and "has a digital copy" stays a simple filter.</summary>
     public bool IsPhysical { get; set; } = true;
     public bool IsDigital { get; set; }
+
+    /// <summary>ISO 639-1 ("pt", "en"…). Everything registered before languages existed is Portuguese.</summary>
+    public string Language { get; set; } = "pt";
     public BookStatus? Status { get; set; }
     public DateOnly? StartedAt { get; set; }
     public DateOnly? FinishedAt { get; set; }
