@@ -85,9 +85,17 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(8);
             client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
         });
-        // Order is priority: Open Library first, Google Books only fills what is missing.
+        services.AddHttpClient<BrasilApiIsbnSource>(client =>
+        {
+            client.BaseAddress = new Uri("https://brasilapi.com.br/");
+            // BrasilAPI asks several catalogues itself, so it gets a little longer than the others.
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+        });
+        // Order is priority: Open Library first; Google Books and then BrasilAPI only fill what is missing.
         services.AddTransient<IIsbnSource>(sp => sp.GetRequiredService<OpenLibraryIsbnSource>());
         services.AddTransient<IIsbnSource>(sp => sp.GetRequiredService<GoogleBooksIsbnSource>());
+        services.AddTransient<IIsbnSource>(sp => sp.GetRequiredService<BrasilApiIsbnSource>());
         services.AddScoped<IsbnLookupService>();
         services.AddHostedService(sp => sp.GetRequiredService<CoverJanitor>());
         services.AddSingleton<IBookSearch, PostgresBookSearch>();

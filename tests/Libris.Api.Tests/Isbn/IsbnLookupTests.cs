@@ -235,12 +235,74 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
         suggestions.Should().Equal("Horror", "Gothic fiction", "Vampires", "Transylvania (Romania)", "Epistolary fiction");
     }
 
-    private async Task<HttpClient> ClientAsync(StubHandler openLibrary, StubHandler google, WebApplicationFactory<Program>? baseFactory = null)
+    [Fact]
+    public async Task Lookup_NoEarlierSourceHasTheAuthor_BrasilApiFillsIt_InReadingOrder()
     {
+        var brasil = new StubHandler(_ => Json(HttpStatusCode.OK, "br-9788571649125.json"));
+        using var client = await ClientAsync(FixtureHandler(), FixtureHandler(), brasilApi: brasil);
+
+        var result = await client.GetFromJsonAsync<IsbnLookupDto>("/v1/isbn/9788571649125", LibraryTestData.Json);
+
+        result!.Title.Should().Be("Pantera No Porão");
+        result.Publisher.Should().Be("Companhia das Letras");
+        result.Authors.Should().Equal("Amos Oz");
+        result.Source.Should().Be("open_library+brasilapi");
+    }
+
+    [Fact]
+    public async Task Lookup_TitleAndPagesWithoutAuthor_StillAsksTheNextSource()
+    {
+        var openLibrary = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("""{"title":"Pantera No Porão","number_of_pages":159,"publishers":["Companhia das Letras"]}""", System.Text.Encoding.UTF8, "application/json"),
+        });
+        var google = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("""{"items":[{"volumeInfo":{"title":"Pantera no porão","authors":["Amós Oz"]}}]}""", System.Text.Encoding.UTF8, "application/json"),
+        });
+        using var client = await ClientAsync(openLibrary, google);
+
+        var result = await client.GetFromJsonAsync<IsbnLookupDto>("/v1/isbn/9788571649125", LibraryTestData.Json);
+
+        result!.Authors.Should().Equal("Amós Oz");
+        result.TotalPages.Should().Be(159);
+        result.Source.Should().Be("open_library+google_books");
+    }
+
+    [Fact]
+    public async Task Lookup_CompleteFromEarlierSources_DoesNotAskBrasilApi()
+    {
+        var brasil = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        using var client = await ClientAsync(FixtureHandler(), FixtureHandler(), brasilApi: brasil);
+
+        using var response = await client.GetAsync(new Uri("/v1/isbn/9780156001311", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        brasil.Requests.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Lookup_BrasilApiDown_ReturnsWhatTheOthersHave()
+    {
+        var brasil = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        using var client = await ClientAsync(FixtureHandler(), FixtureHandler(), brasilApi: brasil);
+
+        var result = await client.GetFromJsonAsync<IsbnLookupDto>("/v1/isbn/9788571649125", LibraryTestData.Json);
+
+        result!.Title.Should().Be("Pantera No Porão");
+        result.Authors.Should().BeEmpty();
+        result.Source.Should().Be("open_library");
+    }
+
+    private async Task<HttpClient> ClientAsync(
+        StubHandler openLibrary, StubHandler google, WebApplicationFactory<Program>? baseFactory = null, StubHandler? brasilApi = null)
+    {
+        brasilApi ??= new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
         var factory = (baseFactory ?? _factory).WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
         {
             services.AddHttpClient<OpenLibraryIsbnSource>().ConfigurePrimaryHttpMessageHandler(() => openLibrary);
             services.AddHttpClient<GoogleBooksIsbnSource>().ConfigurePrimaryHttpMessageHandler(() => google);
+            services.AddHttpClient<BrasilApiIsbnSource>().ConfigurePrimaryHttpMessageHandler(() => brasilApi);
         }));
         return await AuthTestClient.CreateAuthorizedClientAsync(factory);
     }

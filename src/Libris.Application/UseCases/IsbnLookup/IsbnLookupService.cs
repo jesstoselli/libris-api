@@ -26,7 +26,8 @@ public class IsbnLookupService
         var anyFailed = false;
         foreach (var source in _sources)
         {
-            if (merged is { Title: not null, TotalPages: not null })
+            // Complete means title, pages and at least one author; a book without its author is not done yet.
+            if (merged is { Title: not null, TotalPages: not null, Authors.Count: > 0 })
             {
                 break;
             }
