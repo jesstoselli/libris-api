@@ -128,6 +128,22 @@ public class BookService
         }
 
         _db.Books.Add(book);
+        if (request.CurrentPage is { } page)
+        {
+            // Same path as "Anotar" on the Ficha, so progress, history and stats agree from the start.
+            var log = new ReadingLog
+            {
+                Id = Guid.NewGuid(),
+                BookId = book.Id,
+                Date = request.StartedAt ?? request.Today,
+                Page = page,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            _db.ReadingLogs.Add(log);
+            book.ApplyNewLog(log);
+        }
+
         await _db.SaveChangesAsync(ct);
         return OperationResult.Ok(ToDto(book));
     }

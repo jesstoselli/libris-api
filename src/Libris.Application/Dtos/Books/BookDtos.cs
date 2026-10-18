@@ -41,7 +41,9 @@ public sealed record CreateBookRequest(
     DateOnly? FinishedAt,
     DateOnly Today,
     // Optional so older clients keep working: absent means physical.
-    IReadOnlyList<BookFormat>? Formats = null);
+    IReadOnlyList<BookFormat>? Formats = null,
+    // A book registered mid-read: becomes its first reading log, dated on the start date (or today).
+    int? CurrentPage = null);
 
 public sealed record UpdateBookRequest(
     string Title,

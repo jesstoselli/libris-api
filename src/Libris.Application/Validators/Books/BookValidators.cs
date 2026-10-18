@@ -34,6 +34,16 @@ public class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
             .WithMessage("Data de término não pode estar no futuro.");
 
         Include(new BookFormatsValidator<CreateBookRequest>(x => x.Formats));
+
+        RuleFor(x => x.CurrentPage)
+            .Null()
+            .When(x => x.Ownership != BookOwnership.Owned || x.Status is not (BookStatus.Reading or BookStatus.Abandoned))
+            .WithMessage("A página lida só vale para livros em leitura ou abandonados.");
+
+        RuleFor(x => x.CurrentPage)
+            .Must((x, page) => page >= 1 && page <= x.TotalPages)
+            .When(x => x.CurrentPage is not null && x.TotalPages is not null)
+            .WithMessage(x => $"A página precisa estar entre 1 e {x.TotalPages}.");
     }
 }
 
