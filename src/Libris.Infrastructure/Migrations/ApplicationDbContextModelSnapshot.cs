@@ -54,6 +54,18 @@ namespace Libris.Infrastructure.Migrations
                         .HasColumnType("date")
                         .HasColumnName("finished_at");
 
+                    b.Property<bool>("IsDigital")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_digital");
+
+                    b.Property<bool>("IsPhysical")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_physical");
+
                     b.Property<string>("Isbn")
                         .HasMaxLength(13)
                         .HasColumnType("character varying(13)")

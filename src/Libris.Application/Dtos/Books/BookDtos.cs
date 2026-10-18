@@ -22,7 +22,8 @@ public sealed record BookDto(
     DateOnly? FinishedAt,
     DateOnly AddedAt,
     int CurrentPage,
-    int Percent);
+    int Percent,
+    IReadOnlyList<BookFormat> Formats);
 
 public sealed record CreateBookRequest(
     string Title,
@@ -38,7 +39,9 @@ public sealed record CreateBookRequest(
     BookStatus? Status,
     DateOnly? StartedAt,
     DateOnly? FinishedAt,
-    DateOnly Today);
+    DateOnly Today,
+    // Optional so older clients keep working: absent means physical.
+    IReadOnlyList<BookFormat>? Formats = null);
 
 public sealed record UpdateBookRequest(
     string Title,
@@ -51,10 +54,12 @@ public sealed record UpdateBookRequest(
     Guid? CoverId,
     IReadOnlyList<string> Genres,
     DateOnly? StartedAt,
-    DateOnly? FinishedAt);
+    DateOnly? FinishedAt,
+    // Optional so older clients keep working: absent keeps the book's current formats.
+    IReadOnlyList<BookFormat>? Formats = null);
 
 public sealed record ChangeStatusRequest(BookStatus Status, DateOnly Today);
 
 public sealed record AcquireRequest(DateOnly Today, int? TotalPages);
 
-public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search);
+public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null);

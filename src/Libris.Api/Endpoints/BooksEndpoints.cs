@@ -17,6 +17,7 @@ public static class BooksEndpoints
             string? status,
             Guid? genreId,
             string? q,
+            string? format,
             ClaimsPrincipal principal,
             BookService books,
             CancellationToken ct) =>
@@ -27,12 +28,13 @@ public static class BooksEndpoints
             }
 
             if (!QueryEnumParser.TryParse<BookOwnership>(ownership, out var parsedOwnership)
-                || !QueryEnumParser.TryParse<BookStatus>(status, out var parsedStatus))
+                || !QueryEnumParser.TryParse<BookStatus>(status, out var parsedStatus)
+                || !QueryEnumParser.TryParse<BookFormat>(format, out var parsedFormat))
             {
                 return Results.Json(new { error = "validation_error", message = "Filtro inválido." }, statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q);
+            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat);
             return HttpResults.ToHttpResult(await books.ListAsync(userId, query, ct));
         });
 

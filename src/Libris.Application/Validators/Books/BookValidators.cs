@@ -32,6 +32,8 @@ public class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
         RuleFor(x => x.FinishedAt)
             .LessThanOrEqualTo(x => x.Today).When(x => x.FinishedAt is not null)
             .WithMessage("Data de término não pode estar no futuro.");
+
+        Include(new BookFormatsValidator<CreateBookRequest>(x => x.Formats));
     }
 }
 
@@ -42,6 +44,25 @@ public class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
         Include(new BookFieldsValidator<UpdateBookRequest>(
             x => x.Title, x => x.Authors, x => x.TotalPages, x => x.PublishedYear, x => x.Synopsis,
             x => x.Publisher, x => x.Genres, x => x.StartedAt, x => x.FinishedAt));
+
+        Include(new BookFormatsValidator<UpdateBookRequest>(x => x.Formats));
+    }
+}
+
+/// <summary>Formats may be left out (older clients); when sent, at least one valid format is required.</summary>
+internal sealed class BookFormatsValidator<T> : AbstractValidator<T>
+{
+    public BookFormatsValidator(Func<T, IReadOnlyList<BookFormat>?> formats)
+    {
+        RuleFor(x => formats(x))
+            .NotEmpty().When(x => formats(x) is not null)
+            .WithMessage("Escolha pelo menos um formato.")
+            .OverridePropertyName("formats");
+
+        RuleForEach(x => formats(x))
+            .IsInEnum()
+            .WithMessage("Formato inválido.")
+            .OverridePropertyName("formats");
     }
 }
 

@@ -23,6 +23,10 @@ public class BookConfiguration : IEntityTypeConfiguration<Book>
         builder.Property(x => x.Synopsis).HasColumnName("synopsis").HasMaxLength(5000);
         builder.Property(x => x.CoverId).HasColumnName("cover_id");
         builder.Property(x => x.Ownership).HasColumnName("ownership").HasConversion<string>().HasMaxLength(20);
+        // Existing rows become physical: that is what every book was before formats existed.
+        builder.Property(x => x.IsPhysical).HasColumnName("is_physical").HasDefaultValue(true);
+        builder.Property(x => x.IsDigital).HasColumnName("is_digital").HasDefaultValue(false);
+        builder.Ignore(x => x.Formats);
         builder.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20);
         builder.Property(x => x.StartedAt).HasColumnName("started_at");
         builder.Property(x => x.FinishedAt).HasColumnName("finished_at");

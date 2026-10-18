@@ -206,4 +206,23 @@ public sealed class BookRulesTests
 
         act.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void Formats_ListPhysicalFirst_AndDefaultToPhysical()
+    {
+        var book = new Book();
+        book.Formats.Should().Equal(BookFormat.Physical);
+
+        book.SetFormats([BookFormat.Digital, BookFormat.Physical]);
+
+        book.Formats.Should().Equal(BookFormat.Physical, BookFormat.Digital);
+    }
+
+    [Fact]
+    public void Formats_NeedAtLeastOne()
+    {
+        var act = () => new Book().SetFormats([]);
+
+        act.Should().Throw<ArgumentException>();
+    }
 }

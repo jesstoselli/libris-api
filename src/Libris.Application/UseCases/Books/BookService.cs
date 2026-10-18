@@ -53,6 +53,13 @@ public class BookService
             books = books.Where(b => b.Status == status);
         }
 
+        books = query.Format switch
+        {
+            BookFormat.Physical => books.Where(b => b.IsPhysical),
+            BookFormat.Digital => books.Where(b => b.IsDigital),
+            _ => books,
+        };
+
         if (query.GenreId is { } genreId)
         {
             books = books.Where(b => b.Genres.Any(g => g.Id == genreId));
@@ -112,6 +119,7 @@ public class BookService
             AddedAt = request.Today,
             CreatedAt = now,
         };
+        book.SetFormats(request.Formats ?? [BookFormat.Physical]);
         ApplyFields(book, request.Title, request.Authors, isbn.Value, request.TotalPages, request.Publisher,
             request.PublishedYear, request.Synopsis, request.CoverId, now);
         foreach (var genre in await _genres.ResolveByNamesAsync(userId, request.Genres ?? [], ct))
@@ -161,6 +169,11 @@ public class BookService
             request.PublishedYear, request.Synopsis, request.CoverId, DateTime.UtcNow);
         book.StartedAt = request.StartedAt;
         book.FinishedAt = request.FinishedAt;
+        if (request.Formats is { } formats)
+        {
+            book.SetFormats(formats);
+        }
+
         book.Genres.Clear();
         foreach (var genre in await _genres.ResolveByNamesAsync(userId, request.Genres ?? [], ct))
         {
@@ -271,7 +284,8 @@ public class BookService
             book.FinishedAt,
             book.AddedAt,
             currentPage,
-            ReadingProgress.Percent(currentPage, book.TotalPages));
+            ReadingProgress.Percent(currentPage, book.TotalPages),
+            book.Formats);
     }
 
     public Task<Book?> FindAsync(Guid userId, Guid id, bool tracking, CancellationToken ct)

@@ -15,6 +15,10 @@ public class Book
     public string? Synopsis { get; set; }
     public Guid? CoverId { get; set; }
     public BookOwnership Ownership { get; set; }
+
+    /// <summary>Formats are two flags rather than a list: a book can be both, and "has a digital copy" stays a simple filter.</summary>
+    public bool IsPhysical { get; set; } = true;
+    public bool IsDigital { get; set; }
     public BookStatus? Status { get; set; }
     public DateOnly? StartedAt { get; set; }
     public DateOnly? FinishedAt { get; set; }
@@ -87,6 +91,22 @@ public class Book
         Status = BookStatus.NotStarted;
         AddedAt = today;
         return true;
+    }
+
+    /// <summary>Physical first, so every client lists them in the same order.</summary>
+    public IReadOnlyList<BookFormat> Formats =>
+        [.. new[] { (IsPhysical, BookFormat.Physical), (IsDigital, BookFormat.Digital) }.Where(f => f.Item1).Select(f => f.Item2)];
+
+    public void SetFormats(IReadOnlyCollection<BookFormat> formats)
+    {
+        ArgumentNullException.ThrowIfNull(formats);
+        if (formats.Count == 0)
+        {
+            throw new ArgumentException("A book needs at least one format.", nameof(formats));
+        }
+
+        IsPhysical = formats.Contains(BookFormat.Physical);
+        IsDigital = formats.Contains(BookFormat.Digital);
     }
 
     private void EnsureOwned()
