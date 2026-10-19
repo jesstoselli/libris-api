@@ -31,6 +31,43 @@ public sealed class BookStatusTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Create_AsRead_KeepsBothDates()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+
+        var created = await LibraryTestData.CreateBookAsync(client, r => r with
+        {
+            Status = BookStatus.Read,
+            StartedAt = new DateOnly(2026, 9, 1),
+            FinishedAt = new DateOnly(2026, 9, 20),
+        });
+        var read = await client.GetFromJsonAsync<BookDto>($"/v1/books/{created.Id}", LibraryTestData.Json);
+
+        created.StartedAt.Should().Be(new DateOnly(2026, 9, 1));
+        created.FinishedAt.Should().Be(new DateOnly(2026, 9, 20));
+        read!.StartedAt.Should().Be(new DateOnly(2026, 9, 1));
+        read.FinishedAt.Should().Be(new DateOnly(2026, 9, 20));
+        read.Status.Should().Be(BookStatus.Read);
+    }
+
+    [Fact]
+    public async Task Update_AddingTheStartToAReadBook_KeepsBothDates()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        var book = await LibraryTestData.CreateBookAsync(client, r => r with { Status = BookStatus.Read, FinishedAt = new DateOnly(2009, 1, 29) });
+
+        var request = new UpdateBookRequest(
+            book.Title, book.Authors, book.Isbn, book.TotalPages, book.Publisher, book.PublishedYear, book.Synopsis,
+            book.CoverId, [.. book.Genres.Select(g => g.Name)], new DateOnly(2009, 1, 10), new DateOnly(2009, 1, 29));
+        using var response = await client.PutAsJsonAsync($"/v1/books/{book.Id}", request, LibraryTestData.Json);
+        var read = await client.GetFromJsonAsync<BookDto>($"/v1/books/{book.Id}", LibraryTestData.Json);
+
+        response.EnsureSuccessStatusCode();
+        read!.StartedAt.Should().Be(new DateOnly(2009, 1, 10));
+        read.FinishedAt.Should().Be(new DateOnly(2009, 1, 29));
+    }
+
+    [Fact]
     public async Task Patch_ToNotStarted_ClearsDates()
     {
         using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
