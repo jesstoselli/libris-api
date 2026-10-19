@@ -62,6 +62,56 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Lookup_OpenLibraryTimesOutOnce_TriesAgainAndFindsTheBook()
+    {
+        var editionCalls = 0;
+        var openLibrary = new StubHandler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.StartsWith("/isbn/", StringComparison.Ordinal) && Interlocked.Increment(ref editionCalls) == 1)
+            {
+                throw new TaskCanceledException("Open Library took too long.", new TimeoutException());
+            }
+
+            return FixtureResponse(request);
+        });
+        using var client = await ClientAsync(openLibrary, FixtureHandler());
+
+        var result = await client.GetFromJsonAsync<IsbnLookupDto>("/v1/isbn/9780156001311", LibraryTestData.Json);
+
+        result!.Title.Should().Be("The Name of the Rose");
+        result.Source.Should().StartWith("open_library");
+        editionCalls.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Lookup_OpenLibraryTimesOutTwice_GivesUpAfterTheSecondTry()
+    {
+        var editionCalls = 0;
+        var openLibrary = new StubHandler(_ =>
+        {
+            Interlocked.Increment(ref editionCalls);
+            throw new TaskCanceledException("Open Library took too long.", new TimeoutException());
+        });
+        using var client = await ClientAsync(openLibrary, FixtureHandler());
+
+        using var response = await client.GetAsync(new Uri("/v1/isbn/9780156001311", UriKind.Relative));
+
+        editionCalls.Should().Be(2);
+        response.StatusCode.Should().NotBe(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task Lookup_OpenLibraryServerError_IsNotRetried()
+    {
+        var openLibrary = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        using var client = await ClientAsync(openLibrary, FixtureHandler());
+
+        using var response = await client.GetAsync(new Uri("/v1/isbn/9780156001311", UriKind.Relative));
+
+        openLibrary.Requests.Should().ContainSingle();
+    }
+
+    [Fact]
     public async Task Lookup_OpenLibraryWithoutPages_FillsFromGoogle()
     {
         var (openLibrary, google) = (FixtureHandler(), FixtureHandler());
@@ -321,7 +371,9 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     /// <summary>Serves the recorded responses by URL, 404 (Open Library) or an empty result (Google) for anything else.</summary>
-    private static StubHandler FixtureHandler() => new(request =>
+    private static StubHandler FixtureHandler() => new(FixtureResponse);
+
+    private static HttpResponseMessage FixtureResponse(HttpRequestMessage request)
     {
         var uri = request.RequestUri!;
         if (uri.Host.EndsWith("googleapis.com", StringComparison.Ordinal))
@@ -336,7 +388,7 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
         return File.Exists(Path.Combine(FixturesDir, name))
             ? Json(HttpStatusCode.OK, name)
             : new HttpResponseMessage(HttpStatusCode.NotFound);
-    });
+    }
 
     private static HttpResponseMessage Json(HttpStatusCode status, string file) => new(status)
     {

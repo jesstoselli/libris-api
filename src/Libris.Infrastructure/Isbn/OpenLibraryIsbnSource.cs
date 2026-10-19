@@ -17,6 +17,29 @@ public sealed class OpenLibraryIsbnSource : IIsbnSource
 
     public async Task<IsbnSourceResult> FindAsync(string isbn13, CancellationToken ct)
     {
+        // Open Library is often slow for a moment rather than down: a timeout gets one more try.
+        try
+        {
+            return await FindOnceAsync(isbn13, ct);
+        }
+        catch (TaskCanceledException ex) when (IsTimeout(ex, ct))
+        {
+            try
+            {
+                return await FindOnceAsync(isbn13, ct);
+            }
+            catch (TaskCanceledException again) when (IsTimeout(again, ct))
+            {
+                return IsbnSourceResult.Failed;
+            }
+        }
+    }
+
+    private static bool IsTimeout(Exception ex, CancellationToken ct) =>
+        ex is TaskCanceledException { InnerException: TimeoutException } && !ct.IsCancellationRequested;
+
+    private async Task<IsbnSourceResult> FindOnceAsync(string isbn13, CancellationToken ct)
+    {
         try
         {
             using var edition = await GetAsync($"isbn/{isbn13}.json", ct);
@@ -62,8 +85,8 @@ public sealed class OpenLibraryIsbnSource : IIsbnSource
                     : null));
         }
         // Any failure, including catalogue JSON in an unexpected shape, makes this source "down" so the next one
-        // still gets a chance; only the caller's own cancellation propagates.
-        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        // still gets a chance; a timeout goes up to be tried again, and the caller's own cancellation propagates.
+        catch (Exception ex) when ((ex is not OperationCanceledException || !ct.IsCancellationRequested) && !IsTimeout(ex, ct))
         {
             return IsbnSourceResult.Failed;
         }
