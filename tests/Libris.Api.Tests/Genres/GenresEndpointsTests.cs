@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Libris.Api.Tests.Infrastructure;
 using Libris.Application.Dtos.Genres;
+using Libris.Domain.Enums;
 
 namespace Libris.Api.Tests.Genres;
 
@@ -25,6 +26,22 @@ public sealed class GenresEndpointsTests : IClassFixture<ApiWebApplicationFactor
 
         var list = await client.GetFromJsonAsync<List<GenreDto>>("/v1/genres");
         list.Should().ContainSingle().Which.Should().BeEquivalentTo(new { Name = "Terror", BookCount = 0 });
+    }
+
+    [Fact]
+    public async Task List_CountsWishlistBooksApart()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Drácula", Genres = ["Terror"] });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Carmilla", Ownership = BookOwnership.Wishlist, Status = null, Genres = ["Terror", "Gótico"] });
+
+        var list = await client.GetFromJsonAsync<List<GenreDto>>("/v1/genres");
+
+        list.Should().BeEquivalentTo(new[]
+        {
+            new { Name = "Gótico", BookCount = 1, WishlistCount = 1 },
+            new { Name = "Terror", BookCount = 2, WishlistCount = 1 },
+        }, o => o.WithStrictOrdering());
     }
 
     [Fact]

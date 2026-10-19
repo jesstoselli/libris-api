@@ -3,6 +3,7 @@ using Libris.Application.Abstractions.Persistence;
 using Libris.Application.Common;
 using Libris.Application.Dtos.Genres;
 using Libris.Domain.Entities;
+using Libris.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Libris.Application.UseCases.Genres;
@@ -23,7 +24,7 @@ public class GenreService
         var genres = await _db.Genres
             .AsNoTracking()
             .Where(g => g.UserId == userId)
-            .Select(g => new GenreDto(g.Id, g.Name, g.Books.Count))
+            .Select(g => new GenreDto(g.Id, g.Name, g.Books.Count, g.Books.Count(b => b.Ownership == BookOwnership.Wishlist)))
             .ToListAsync(ct);
 
         IReadOnlyList<GenreDto> ordered = genres.OrderBy(g => g.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
@@ -51,7 +52,7 @@ public class GenreService
         _db.Genres.Add(genre);
         await _db.SaveChangesAsync(ct);
 
-        return OperationResult.Ok(new GenreDto(genre.Id, genre.Name, 0));
+        return OperationResult.Ok(new GenreDto(genre.Id, genre.Name, 0, 0));
     }
 
     public async Task<OperationResult<GenreDto>> UpdateAsync(Guid userId, Guid id, GenreRequest request, CancellationToken ct = default)
@@ -80,7 +81,7 @@ public class GenreService
         genre.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
 
-        return OperationResult.Ok(new GenreDto(genre.Id, genre.Name, genre.Books.Count));
+        return OperationResult.Ok(new GenreDto(genre.Id, genre.Name, genre.Books.Count, genre.Books.Count(b => b.Ownership == BookOwnership.Wishlist)));
     }
 
     public async Task<OperationResult<bool>> DeleteAsync(Guid userId, Guid id, CancellationToken ct = default)
