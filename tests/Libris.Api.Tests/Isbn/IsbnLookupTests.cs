@@ -50,6 +50,18 @@ public sealed class IsbnLookupTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Lookup_WithHyphens_AsksTheSourcesForTheBareIsbn()
+    {
+        var (openLibrary, google) = (FixtureHandler(), FixtureHandler());
+        using var client = await ClientAsync(openLibrary, google);
+
+        var result = await client.GetFromJsonAsync<IsbnLookupDto>("/v1/isbn/978-0-15-600131-1", LibraryTestData.Json);
+
+        result!.Title.Should().Be("The Name of the Rose");
+        openLibrary.Requests.First().AbsolutePath.Should().Be("/isbn/9780156001311.json");
+    }
+
+    [Fact]
     public async Task Lookup_OpenLibraryWithoutPages_FillsFromGoogle()
     {
         var (openLibrary, google) = (FixtureHandler(), FixtureHandler());
