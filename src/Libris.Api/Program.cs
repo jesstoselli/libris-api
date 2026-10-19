@@ -122,6 +122,7 @@ app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapGenresEndpoints();
 app.MapBooksEndpoints();
+app.MapAuthorsEndpoints();
 app.MapReadingLogsEndpoints();
 app.MapCoversEndpoints();
 app.MapIsbnEndpoints();

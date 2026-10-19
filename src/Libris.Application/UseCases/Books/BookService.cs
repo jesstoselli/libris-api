@@ -91,6 +91,19 @@ public class BookService
         return OperationResult.Ok(dtos);
     }
 
+    /// <summary>Every author on the user's books, owned or wished for, once and by name; feeds the form's suggestions.</summary>
+    public async Task<OperationResult<IReadOnlyList<string>>> ListAuthorsAsync(Guid userId, CancellationToken ct = default)
+    {
+        var lists = await _db.Books.AsNoTracking().Where(b => b.UserId == userId).Select(b => b.Authors).ToListAsync(ct);
+        IReadOnlyList<string> authors = lists
+            .SelectMany(a => a)
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(a => a, StringComparer.InvariantCultureIgnoreCase)
+            .ToList();
+        return OperationResult.Ok(authors);
+    }
+
     public async Task<OperationResult<BookDto>> GetAsync(Guid userId, Guid id, CancellationToken ct = default)
     {
         var book = await FindAsync(userId, id, tracking: false, ct);
