@@ -66,6 +66,12 @@ public class BookService
             _ => books,
         };
 
+        if (!string.IsNullOrWhiteSpace(query.Author))
+        {
+            var author = query.Author.Trim();
+            books = books.Where(b => b.Authors.Contains(author));
+        }
+
         if (query.GenreId is { } genreId)
         {
             books = books.Where(b => b.Genres.Any(g => g.Id == genreId));

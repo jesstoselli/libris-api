@@ -66,6 +66,22 @@ public sealed class BooksListTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task List_AuthorFilter_MatchesThatExactAuthor_InTheAskedList()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Escravos", Authors = ["Kangni Alem"] });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Coautoria", Authors = ["Fulana", "Kangni Alem"] });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Outro", Authors = ["Kangni Alemão"] });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Desejo", Authors = ["Kangni Alem"], Ownership = BookOwnership.Wishlist, Status = null });
+
+        var owned = await ListAsync(client, "?author=Kangni%20Alem");
+        var wished = await ListAsync(client, "?ownership=wishlist&author=Kangni%20Alem");
+
+        owned.Select(b => b.Title).Should().Equal("Coautoria", "Escravos");
+        wished.Select(b => b.Title).Should().Equal("Desejo");
+    }
+
+    [Fact]
     public async Task List_FiltersCombine()
     {
         using var client = await SeedAsync();

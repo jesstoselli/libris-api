@@ -69,4 +69,5 @@ public sealed record ChangeStatusRequest(BookStatus Status, DateOnly Today);
 
 public sealed record AcquireRequest(DateOnly Today, int? TotalPages);
 
-public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null, string? Language = null);
+/// <param name="Author">One author exactly as written on the book, as the book page links it.</param>
+public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null, string? Language = null, string? Author = null);
