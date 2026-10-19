@@ -78,7 +78,8 @@ public class BookService
 
         var list = await books.ToListAsync(ct);
         IReadOnlyList<BookDto> dtos = list
-            .OrderBy(b => b.Title, StringComparer.InvariantCultureIgnoreCase)
+            .OrderBy(b => TitleSort.Key(b.Title, b.Language), StringComparer.InvariantCultureIgnoreCase)
+            .ThenBy(b => b.Title, StringComparer.InvariantCultureIgnoreCase)
             .Select(ToDto)
             .ToList();
         return OperationResult.Ok(dtos);

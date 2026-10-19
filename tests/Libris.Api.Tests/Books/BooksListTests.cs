@@ -30,6 +30,21 @@ public sealed class BooksListTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task List_FilesTitlesWithoutTheLeadingArticleOfTheirLanguage()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "O Colecionador de Ossos" });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Bird Box", Language = "en" });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "The Shining", Language = "en" });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Drácula" });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "The Hobbit" });
+
+        var books = await ListAsync(client, "");
+
+        books.Select(b => b.Title).Should().Equal("Bird Box", "O Colecionador de Ossos", "Drácula", "The Shining", "The Hobbit");
+    }
+
+    [Fact]
     public async Task List_StatusFilter()
     {
         using var client = await SeedAsync();
