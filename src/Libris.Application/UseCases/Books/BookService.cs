@@ -104,6 +104,18 @@ public class BookService
         return OperationResult.Ok(authors);
     }
 
+    /// <summary>Every publisher on the user's books, once and by name; feeds the form's suggestions.</summary>
+    public async Task<OperationResult<IReadOnlyList<string>>> ListPublishersAsync(Guid userId, CancellationToken ct = default)
+    {
+        var names = await _db.Books.AsNoTracking()
+            .Where(b => b.UserId == userId && b.Publisher != null)
+            .Select(b => b.Publisher!)
+            .Distinct()
+            .ToListAsync(ct);
+        IReadOnlyList<string> publishers = names.OrderBy(p => p, StringComparer.InvariantCultureIgnoreCase).ToList();
+        return OperationResult.Ok(publishers);
+    }
+
     public async Task<OperationResult<BookDto>> GetAsync(Guid userId, Guid id, CancellationToken ct = default)
     {
         var book = await FindAsync(userId, id, tracking: false, ct);
