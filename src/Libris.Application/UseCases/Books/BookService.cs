@@ -286,7 +286,7 @@ public class BookService
             return NotOwned();
         }
 
-        book.ChangeStatus(request.Status, request.Today);
+        book.ChangeStatus(request.Status, request.Today, request.WithoutDate == true);
         book.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
         return OperationResult.Ok(ToDto(book));

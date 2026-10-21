@@ -31,6 +31,21 @@ public sealed class BookStatusTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Patch_ToReadWithoutDate_LeavesFinishedEmpty()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        var book = await LibraryTestData.CreateBookAsync(client);
+
+        using var response = await client.PatchAsJsonAsync(
+            $"/v1/books/{book.Id}/status", new ChangeStatusRequest(BookStatus.Read, LibraryTestData.Today, WithoutDate: true), LibraryTestData.Json);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await response.ReadAsync<BookDto>();
+        updated.Status.Should().Be(BookStatus.Read);
+        updated.FinishedAt.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Create_AsRead_KeepsBothDates()
     {
         using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);

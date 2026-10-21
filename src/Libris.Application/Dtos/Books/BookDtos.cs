@@ -65,7 +65,11 @@ public sealed record UpdateBookRequest(
     // Absent keeps the book's current language.
     string? Language = null);
 
-public sealed record ChangeStatusRequest(BookStatus Status, DateOnly Today);
+public sealed record ChangeStatusRequest(
+    BookStatus Status,
+    DateOnly Today,
+    // Optional so older clients keep working: absent means "Lido" is finished today when there is no finish yet.
+    bool? WithoutDate = null);
 
 public sealed record AcquireRequest(DateOnly Today, int? TotalPages);
 

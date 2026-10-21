@@ -47,7 +47,8 @@ public class StatsService
             finished.Count,
             deltas.Sum(d => d.PagesRead),
             books.Count(b => b.Status == BookStatus.Reading),
-            months));
+            months,
+            books.Count(b => b.Status == BookStatus.Read && b.FinishedAt is null)));
     }
 
     public async Task<OperationResult<MonthDetailDto>> GetMonthAsync(Guid userId, int year, int month, CancellationToken ct = default)

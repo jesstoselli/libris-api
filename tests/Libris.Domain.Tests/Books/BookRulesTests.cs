@@ -69,6 +69,17 @@ public sealed class BookRulesTests
     }
 
     [Fact]
+    public void ChangeStatus_ToReadWithoutDate_LeavesFinishedEmpty()
+    {
+        var book = Owned(BookStatus.NotStarted);
+
+        book.ChangeStatus(BookStatus.Read, Today, withoutDate: true);
+
+        book.Status.Should().Be(BookStatus.Read);
+        book.FinishedAt.Should().BeNull();
+    }
+
+    [Fact]
     public void ChangeStatus_ToAbandoned_TouchesNoDates()
     {
         var book = Owned(BookStatus.Reading);

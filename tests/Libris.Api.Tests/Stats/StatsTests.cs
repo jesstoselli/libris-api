@@ -98,6 +98,21 @@ public sealed class StatsTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Year_ReadWithoutDate_CountsOwnedReadBooksWithNoFinish_InAnyYear()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        await LibraryTestData.CreateBookAsync(client, r => r with { Status = BookStatus.Read });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Drácula", Status = BookStatus.Read });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Frankenstein", Status = BookStatus.Read, FinishedAt = new DateOnly(2026, 3, 1) });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Carmilla", Status = BookStatus.Abandoned });
+
+        var year = await YearAsync(client, 2019);
+
+        year.ReadWithoutDate.Should().Be(2);
+        year.BooksFinished.Should().Be(0);
+    }
+
+    [Fact]
     public async Task Year_ReadingNow_IgnoresYear()
     {
         using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
