@@ -33,7 +33,8 @@ public class Book
     public ICollection<ReadingLog> Logs { get; } = new List<ReadingLog>();
 
     /// <param name="withoutDate">A book read long ago: "Lido" without a finish, so it stays out of the monthly numbers.</param>
-    public void ChangeStatus(BookStatus status, DateOnly today, bool withoutDate = false)
+    /// <param name="finishedOn">"Lido" on a remembered day, which replaces any finish the book had.</param>
+    public void ChangeStatus(BookStatus status, DateOnly today, bool withoutDate = false, DateOnly? finishedOn = null)
     {
         EnsureOwned();
 
@@ -44,7 +45,11 @@ public class Book
                 StartedAt ??= today;
                 break;
             case BookStatus.Read:
-                if (!withoutDate)
+                if (finishedOn is { } day)
+                {
+                    FinishedAt = day;
+                }
+                else if (!withoutDate)
                 {
                     FinishedAt ??= today;
                 }

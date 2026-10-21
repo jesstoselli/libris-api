@@ -69,9 +69,19 @@ public sealed record ChangeStatusRequest(
     BookStatus Status,
     DateOnly Today,
     // Optional so older clients keep working: absent means "Lido" is finished today when there is no finish yet.
-    bool? WithoutDate = null);
+    bool? WithoutDate = null,
+    // "Lido" on a remembered day; it wins over WithoutDate.
+    DateOnly? FinishedAt = null);
+
+/// <summary>One spelling of a publisher and how many books carry it, in the Acervo and in the Wishlist.</summary>
+public sealed record PublisherDto(string Name, int BookCount, int WishlistCount);
+
+/// <summary>Every book written with <c>From</c> gets <c>To</c>; an existing <c>To</c> simply absorbs them.</summary>
+public sealed record RenamePublisherRequest(string From, string To);
+
+public sealed record RenamePublisherResult(int Updated);
 
 public sealed record AcquireRequest(DateOnly Today, int? TotalPages);
 
 /// <param name="Author">One author exactly as written on the book, as the book page links it.</param>
-public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null, string? Language = null, string? Author = null);
+public sealed record BookListQuery(BookOwnership Ownership, BookStatus? Status, Guid? GenreId, string? Search, BookFormat? Format = null, string? Language = null, string? Author = null, string? Publisher = null);

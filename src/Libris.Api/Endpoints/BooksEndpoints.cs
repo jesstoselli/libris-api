@@ -21,6 +21,7 @@ public static class BooksEndpoints
             string? format,
             string? language,
             string? author,
+            string? publisher,
             ClaimsPrincipal principal,
             BookService books,
             CancellationToken ct) =>
@@ -38,7 +39,7 @@ public static class BooksEndpoints
                 return Results.Json(new { error = "validation_error", message = "Filtro inválido." }, statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat, language, author);
+            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat, language, author, publisher);
             return HttpResults.ToHttpResult(await books.ListAsync(userId, query, ct));
         });
 

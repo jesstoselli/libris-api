@@ -15,6 +15,8 @@ namespace Libris.Application.UseCases.Books;
 
 public class BookService
 {
+    private const int MaxPublisherLength = 200;
+
     private readonly IApplicationDbContext _db;
     private readonly GenreService _genres;
     private readonly IBookSearch _search;
@@ -72,6 +74,12 @@ public class BookService
             books = books.Where(b => b.Authors.Contains(author));
         }
 
+        if (!string.IsNullOrWhiteSpace(query.Publisher))
+        {
+            var publisher = query.Publisher.Trim();
+            books = books.Where(b => b.Publisher == publisher);
+        }
+
         if (query.GenreId is { } genreId)
         {
             books = books.Where(b => b.Genres.Any(g => g.Id == genreId));
@@ -114,6 +122,43 @@ public class BookService
             .ToListAsync(ct);
         IReadOnlyList<string> publishers = names.OrderBy(p => p, StringComparer.InvariantCultureIgnoreCase).ToList();
         return OperationResult.Ok(publishers);
+    }
+
+    /// <summary>Each spelling apart with its counts, so the publishers manager shows which variants to merge.</summary>
+    public async Task<OperationResult<IReadOnlyList<PublisherDto>>> PublisherSummaryAsync(Guid userId, CancellationToken ct = default)
+    {
+        var rows = await _db.Books.AsNoTracking()
+            .Where(b => b.UserId == userId && b.Publisher != null)
+            .GroupBy(b => b.Publisher!)
+            .Select(g => new PublisherDto(
+                g.Key,
+                g.Count(b => b.Ownership == BookOwnership.Owned),
+                g.Count(b => b.Ownership == BookOwnership.Wishlist)))
+            .ToListAsync(ct);
+        IReadOnlyList<PublisherDto> summary = rows.OrderBy(p => p.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
+        return OperationResult.Ok(summary);
+    }
+
+    public async Task<OperationResult<RenamePublisherResult>> RenamePublisherAsync(Guid userId, RenamePublisherRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var to = request.To?.Trim();
+        if (string.IsNullOrEmpty(to) || to.Length > MaxPublisherLength)
+        {
+            return OperationResult.Fail<RenamePublisherResult>("validation_error", $"A editora precisa ter entre 1 e {MaxPublisherLength} caracteres.");
+        }
+
+        var now = DateTime.UtcNow;
+        var books = await _db.Books.Where(b => b.UserId == userId && b.Publisher == request.From).ToListAsync(ct);
+        foreach (var book in books)
+        {
+            book.Publisher = to;
+            book.UpdatedAt = now;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return OperationResult.Ok(new RenamePublisherResult(books.Count));
     }
 
     public async Task<OperationResult<BookDto>> GetAsync(Guid userId, Guid id, CancellationToken ct = default)
@@ -286,7 +331,12 @@ public class BookService
             return NotOwned();
         }
 
-        book.ChangeStatus(request.Status, request.Today, request.WithoutDate == true);
+        if (request.FinishedAt is { } finished && finished > request.Today)
+        {
+            return OperationResult.Fail<BookDto>("validation_error", "A data não pode estar no futuro.");
+        }
+
+        book.ChangeStatus(request.Status, request.Today, request.WithoutDate == true, request.FinishedAt);
         book.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
         return OperationResult.Ok(ToDto(book));
