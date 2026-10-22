@@ -29,6 +29,10 @@ public class BookConfiguration : IEntityTypeConfiguration<Book>
         builder.Ignore(x => x.Formats);
         builder.Property(x => x.Language).HasColumnName("language").HasMaxLength(2).IsRequired().HasDefaultValue("pt");
         builder.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20);
+        builder.Property(x => x.Series).HasColumnName("series").HasMaxLength(200);
+        builder.Property(x => x.SeriesNumber).HasColumnName("series_number").HasPrecision(6, 2);
+        builder.Property(x => x.Rating).HasColumnName("rating").HasPrecision(2, 1);
+        builder.HasIndex(x => new { x.UserId, x.Series });
         builder.Property(x => x.StartedAt).HasColumnName("started_at");
         builder.Property(x => x.FinishedAt).HasColumnName("finished_at");
         builder.Property(x => x.AddedAt).HasColumnName("added_at");

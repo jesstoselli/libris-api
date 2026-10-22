@@ -124,6 +124,7 @@ app.MapGenresEndpoints();
 app.MapBooksEndpoints();
 app.MapAuthorsEndpoints();
 app.MapPublishersEndpoints();
+app.MapSeriesEndpoints();
 app.MapReadingLogsEndpoints();
 app.MapCoversEndpoints();
 app.MapIsbnEndpoints();

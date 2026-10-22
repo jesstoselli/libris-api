@@ -35,6 +35,7 @@ public class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
 
         Include(new BookFormatsValidator<CreateBookRequest>(x => x.Formats));
         Include(new BookLanguageValidator<CreateBookRequest>(x => x.Language));
+        Include(new BookSeriesValidator<CreateBookRequest>(x => x.Series));
 
         RuleFor(x => x.CurrentPage)
             .Null()
@@ -58,6 +59,25 @@ public class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
 
         Include(new BookFormatsValidator<UpdateBookRequest>(x => x.Formats));
         Include(new BookLanguageValidator<UpdateBookRequest>(x => x.Language));
+        Include(new BookSeriesValidator<UpdateBookRequest>(x => x.Series));
+    }
+}
+
+/// <summary>A series name of up to 200 characters, and a number from 0 to 9999 with at most two decimals.</summary>
+internal sealed class BookSeriesValidator<T> : AbstractValidator<T>
+{
+    public BookSeriesValidator(Func<T, BookSeriesInput?> series)
+    {
+        RuleFor(x => series(x)!.Name)
+            .Must(n => n is null || n.Trim().Length <= 200).WithMessage("O nome da série pode ter no máximo 200 caracteres.")
+            .When(x => series(x) is not null)
+            .OverridePropertyName("series");
+
+        RuleFor(x => series(x)!.Number)
+            .Must(n => n is >= 0 and <= 9999 && decimal.Round(n.Value, 2) == n.Value)
+            .When(x => series(x)?.Number is not null)
+            .WithMessage("O número na série vai de 0 a 9999, com até duas casas decimais.")
+            .OverridePropertyName("seriesNumber");
     }
 }
 

@@ -23,6 +23,13 @@ public class Book
     /// <summary>ISO 639-1 ("pt", "en"…). Everything registered before languages existed is Portuguese.</summary>
     public string Language { get; set; } = "pt";
     public BookStatus? Status { get; set; }
+
+    /// <summary>The series as the reader names it; the number may be a decimal (1.5 for a novella) or 0 for a prequel.</summary>
+    public string? Series { get; private set; }
+    public decimal? SeriesNumber { get; private set; }
+
+    /// <summary>0.5 to 5 in halves; only a book read or given up on is rated, and changing its status keeps the rating.</summary>
+    public decimal? Rating { get; private set; }
     public DateOnly? StartedAt { get; set; }
     public DateOnly? FinishedAt { get; set; }
     public DateOnly AddedAt { get; set; }
@@ -34,6 +41,26 @@ public class Book
 
     /// <param name="withoutDate">A book read long ago: "Lido" without a finish, so it stays out of the monthly numbers.</param>
     /// <param name="finishedOn">"Lido" on a remembered day, which replaces any finish the book had.</param>
+    /// <summary>A blank name takes the book out of its series, number included.</summary>
+    public void SetSeries(string? name, decimal? number)
+    {
+        var trimmed = name?.Trim();
+        Series = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        SeriesNumber = Series is null ? null : number;
+    }
+
+    /// <returns>false for a book that cannot be rated (on the wishlist, or not read nor given up on).</returns>
+    public bool Rate(decimal? rating)
+    {
+        if (rating is not null && (Ownership != BookOwnership.Owned || Status is not (BookStatus.Read or BookStatus.Abandoned)))
+        {
+            return false;
+        }
+
+        Rating = rating;
+        return true;
+    }
+
     public void ChangeStatus(BookStatus status, DateOnly today, bool withoutDate = false, DateOnly? finishedOn = null)
     {
         EnsureOwned();

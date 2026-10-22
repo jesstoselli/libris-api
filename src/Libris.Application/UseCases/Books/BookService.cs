@@ -16,6 +16,7 @@ namespace Libris.Application.UseCases.Books;
 public class BookService
 {
     private const int MaxPublisherLength = 200;
+    private const int MaxSeriesLength = 200;
 
     private readonly IApplicationDbContext _db;
     private readonly GenreService _genres;
@@ -74,6 +75,17 @@ public class BookService
             books = books.Where(b => b.Authors.Contains(author));
         }
 
+        if (!string.IsNullOrWhiteSpace(query.Series))
+        {
+            var series = query.Series.Trim();
+            books = books.Where(b => b.Series == series);
+        }
+
+        if (query.MinRating is { } minRating)
+        {
+            books = books.Where(b => b.Rating >= minRating);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Publisher))
         {
             var publisher = query.Publisher.Trim();
@@ -91,11 +103,20 @@ public class BookService
         }
 
         var list = await books.ToListAsync(ct);
-        IReadOnlyList<BookDto> dtos = list
+        IEnumerable<Book> ordered = list
             .OrderBy(b => TitleSort.Key(b.Title, b.Language), StringComparer.InvariantCultureIgnoreCase)
-            .ThenBy(b => b.Title, StringComparer.InvariantCultureIgnoreCase)
-            .Select(ToDto)
-            .ToList();
+            .ThenBy(b => b.Title, StringComparer.InvariantCultureIgnoreCase);
+        if (query.Sort == BookSort.Rating)
+        {
+            ordered = ordered.OrderByDescending(b => b.Rating.HasValue).ThenByDescending(b => b.Rating);
+        }
+        else if (!string.IsNullOrWhiteSpace(query.Series))
+        {
+            // One series reads in its own order; books without a number go last.
+            ordered = ordered.OrderBy(b => b.SeriesNumber is null).ThenBy(b => b.SeriesNumber);
+        }
+
+        IReadOnlyList<BookDto> dtos = ordered.Select(ToDto).ToList();
         return OperationResult.Ok(dtos);
     }
 
@@ -161,6 +182,84 @@ public class BookService
         return OperationResult.Ok(new RenamePublisherResult(books.Count));
     }
 
+    /// <summary>Each series with its counts, for the form's suggestions and the series manager.</summary>
+    public async Task<OperationResult<IReadOnlyList<SeriesDto>>> SeriesSummaryAsync(Guid userId, CancellationToken ct = default)
+    {
+        var rows = await _db.Books.AsNoTracking()
+            .Where(b => b.UserId == userId && b.Series != null)
+            .GroupBy(b => b.Series!)
+            .Select(g => new SeriesDto(
+                g.Key,
+                g.Count(b => b.Ownership == BookOwnership.Owned),
+                g.Count(b => b.Ownership == BookOwnership.Wishlist)))
+            .ToListAsync(ct);
+        IReadOnlyList<SeriesDto> summary = rows.OrderBy(s => s.Name, StringComparer.InvariantCultureIgnoreCase).ToList();
+        return OperationResult.Ok(summary);
+    }
+
+    /// <summary>Every book of one series, owned or wished for, in reading order; the book page shows where it stands.</summary>
+    public async Task<OperationResult<IReadOnlyList<BookDto>>> SeriesBooksAsync(Guid userId, string name, CancellationToken ct = default)
+    {
+        var series = name.Trim();
+        var list = await WithDetails(_db.Books.AsNoTracking())
+            .Where(b => b.UserId == userId && b.Series == series)
+            .ToListAsync(ct);
+        IReadOnlyList<BookDto> books = list
+            .OrderBy(b => b.SeriesNumber is null)
+            .ThenBy(b => b.SeriesNumber)
+            .ThenBy(b => b.Title, StringComparer.InvariantCultureIgnoreCase)
+            .Select(ToDto)
+            .ToList();
+        return OperationResult.Ok(books);
+    }
+
+    public async Task<OperationResult<RenameSeriesResult>> RenameSeriesAsync(Guid userId, RenameSeriesRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var to = request.To?.Trim();
+        if (string.IsNullOrEmpty(to) || to.Length > MaxSeriesLength)
+        {
+            return OperationResult.Fail<RenameSeriesResult>("validation_error", $"A série precisa ter entre 1 e {MaxSeriesLength} caracteres.");
+        }
+
+        var now = DateTime.UtcNow;
+        var books = await _db.Books.Where(b => b.UserId == userId && b.Series == request.From).ToListAsync(ct);
+        foreach (var book in books)
+        {
+            book.SetSeries(to, book.SeriesNumber);
+            book.UpdatedAt = now;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return OperationResult.Ok(new RenameSeriesResult(books.Count));
+    }
+
+    public async Task<OperationResult<BookDto>> RateAsync(Guid userId, Guid id, RateBookRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.Rating is { } rating && (rating is < 0.5m or > 5m || rating * 2 != decimal.Truncate(rating * 2)))
+        {
+            return OperationResult.Fail<BookDto>("validation_error", "A avaliação vai de 0,5 a 5, de meia em meia estrela.");
+        }
+
+        var book = await FindAsync(userId, id, tracking: true, ct);
+        if (book is null)
+        {
+            return NotFound();
+        }
+
+        if (!book.Rate(request.Rating))
+        {
+            return OperationResult.Fail<BookDto>("not_rateable", "Só dá pra avaliar um livro do acervo lido ou abandonado.");
+        }
+
+        book.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+        return OperationResult.Ok(ToDto(book));
+    }
+
     public async Task<OperationResult<BookDto>> GetAsync(Guid userId, Guid id, CancellationToken ct = default)
     {
         var book = await FindAsync(userId, id, tracking: false, ct);
@@ -204,6 +303,10 @@ public class BookService
         };
         book.SetFormats(request.Formats ?? [BookFormat.Physical]);
         book.Language = (request.Language ?? "pt").ToLowerInvariant();
+        if (request.Series is { } series)
+        {
+            book.SetSeries(series.Name, series.Number);
+        }
         ApplyFields(book, request.Title, request.Authors, isbn.Value, request.TotalPages, request.Publisher,
             request.PublishedYear, request.Synopsis, request.CoverId, now);
         foreach (var genre in await _genres.ResolveByNamesAsync(userId, request.Genres ?? [], ct))
@@ -277,6 +380,11 @@ public class BookService
         if (request.Language is { } language)
         {
             book.Language = language.ToLowerInvariant();
+        }
+
+        if (request.Series is { } series)
+        {
+            book.SetSeries(series.Name, series.Number);
         }
 
         book.Genres.Clear();
@@ -398,7 +506,10 @@ public class BookService
             currentPage,
             ReadingProgress.Percent(currentPage, book.TotalPages),
             book.Formats,
-            book.Language);
+            book.Language,
+            book.Series,
+            book.SeriesNumber,
+            book.Rating);
     }
 
     public Task<Book?> FindAsync(Guid userId, Guid id, bool tracking, CancellationToken ct)

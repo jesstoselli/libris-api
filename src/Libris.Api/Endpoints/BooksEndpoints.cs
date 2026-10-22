@@ -22,6 +22,9 @@ public static class BooksEndpoints
             string? language,
             string? author,
             string? publisher,
+            string? series,
+            decimal? minRating,
+            string? sort,
             ClaimsPrincipal principal,
             BookService books,
             CancellationToken ct) =>
@@ -34,12 +37,13 @@ public static class BooksEndpoints
             if (!QueryEnumParser.TryParse<BookOwnership>(ownership, out var parsedOwnership)
                 || !QueryEnumParser.TryParse<BookStatus>(status, out var parsedStatus)
                 || !QueryEnumParser.TryParse<BookFormat>(format, out var parsedFormat)
-                || (language is not null && !BookLanguage.IsCode(language)))
+                || (language is not null && !BookLanguage.IsCode(language))
+                || !QueryEnumParser.TryParse<BookSort>(sort, out var parsedSort))
             {
                 return Results.Json(new { error = "validation_error", message = "Filtro inválido." }, statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat, language, author, publisher);
+            var query = new BookListQuery(parsedOwnership ?? BookOwnership.Owned, parsedStatus, genreId, q, parsedFormat, language, author, publisher, series, minRating, parsedSort ?? BookSort.Title);
             return HttpResults.ToHttpResult(await books.ListAsync(userId, query, ct));
         });
 
@@ -66,6 +70,11 @@ public static class BooksEndpoints
         group.MapPatch("/{id:guid}/status", async (Guid id, ChangeStatusRequest request, ClaimsPrincipal principal, BookService books, CancellationToken ct) =>
             principal.TryGetUserId(out var userId)
                 ? HttpResults.ToHttpResult(await books.ChangeStatusAsync(userId, id, request, ct))
+                : Results.Unauthorized());
+
+        group.MapPatch("/{id:guid}/rating", async (Guid id, RateBookRequest request, ClaimsPrincipal principal, BookService books, CancellationToken ct) =>
+            principal.TryGetUserId(out var userId)
+                ? HttpResults.ToHttpResult(await books.RateAsync(userId, id, request, ct))
                 : Results.Unauthorized());
 
         group.MapPost("/{id:guid}/acquire", async (Guid id, AcquireRequest request, ClaimsPrincipal principal, BookService books, CancellationToken ct) =>

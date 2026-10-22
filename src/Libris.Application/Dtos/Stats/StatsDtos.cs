@@ -9,6 +9,9 @@ public sealed record FinishedBookDto(Guid BookId, string Title, IReadOnlyList<st
 
 public sealed record ProgressedBookDto(Guid BookId, string Title, int PagesRead);
 
+/// <summary>A day of the reading calendar: the pages read and which books they came from.</summary>
+public sealed record DayStatsDto(DateOnly Date, int PagesRead, IReadOnlyList<ProgressedBookDto> Books);
+
 public sealed record MonthDetailDto(
     int Year,
     int Month,

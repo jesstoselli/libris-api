@@ -78,6 +78,30 @@ public class StatsService
         return OperationResult.Ok(new MonthDetailDto(year, month, deltas.Sum(d => d.PagesRead), finished, progressed));
     }
 
+    /// <summary>The reading calendar: every day of the year with pages, and the books they came from.</summary>
+    public async Task<OperationResult<IReadOnlyList<DayStatsDto>>> GetDaysAsync(Guid userId, int year, CancellationToken ct = default)
+    {
+        if (year is < MinYear or > MaxYear)
+        {
+            return OperationResult.Fail<IReadOnlyList<DayStatsDto>>("validation_error", "Ano inválido.");
+        }
+
+        var books = await LoadAsync(userId, ct);
+        IReadOnlyList<DayStatsDto> days = Deltas(books)
+            .Where(d => d.Date.Year == year && d.PagesRead > 0)
+            .GroupBy(d => d.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new DayStatsDto(
+                g.Key,
+                g.Sum(d => d.PagesRead),
+                g.GroupBy(d => d.Book)
+                    .Select(b => new ProgressedBookDto(b.Key.Id, b.Key.Title, b.Sum(d => d.PagesRead)))
+                    .OrderByDescending(b => b.PagesRead)
+                    .ToList()))
+            .ToList();
+        return OperationResult.Ok(days);
+    }
+
     private Task<List<Book>> LoadAsync(Guid userId, CancellationToken ct) =>
         _db.Books
             .AsNoTracking()

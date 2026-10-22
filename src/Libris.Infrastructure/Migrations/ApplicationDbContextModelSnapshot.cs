@@ -94,6 +94,21 @@ namespace Libris.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("publisher");
 
+                    b.Property<decimal?>("Rating")
+                        .HasPrecision(2, 1)
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("Series")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("series");
+
+                    b.Property<decimal?>("SeriesNumber")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("series_number");
+
                     b.Property<DateOnly?>("StartedAt")
                         .HasColumnType("date")
                         .HasColumnName("started_at");
@@ -136,6 +151,8 @@ namespace Libris.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_books_user_isbn")
                         .HasFilter("isbn IS NOT NULL");
+
+                    b.HasIndex("UserId", "Series");
 
                     b.ToTable("books", (string)null);
                 });
