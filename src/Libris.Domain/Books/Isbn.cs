@@ -13,7 +13,7 @@ public static class Isbn
             return false;
         }
 
-        var compact = new string(input.Where(c => c is not ('-' or ' ')).ToArray()).ToUpperInvariant();
+        var compact = new string(input.Where(c => !IsSeparator(c)).ToArray()).ToUpperInvariant();
 
         if (compact.Length == 13 && compact.All(char.IsAsciiDigit) && CheckDigit13(compact.AsSpan(0, 12)) == compact[12] - '0')
         {
@@ -30,6 +30,13 @@ public static class Isbn
 
         return false;
     }
+
+    /// <summary>
+    /// Any space or hyphen, and the invisible marks a copy from a store page brings along (U+200E around the digits on
+    /// Amazon); a letter in the middle still makes the ISBN invalid.
+    /// </summary>
+    private static bool IsSeparator(char c) =>
+        char.IsWhiteSpace(c) || char.GetUnicodeCategory(c) is UnicodeCategory.DashPunctuation or UnicodeCategory.Format;
 
     private static int CheckDigit13(ReadOnlySpan<char> first12)
     {
