@@ -64,13 +64,12 @@ public sealed class StatsTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Year_OldBookWithoutLogs_CountsFinishedButNoPages()
+    public async Task Year_ReadBookWithoutLogs_CountsItsPagesInTheFinishMonth()
     {
         using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
         await LibraryTestData.CreateBookAsync(client, r => r with
         {
             Status = BookStatus.Read,
-            StartedAt = new DateOnly(2024, 3, 1),
             FinishedAt = new DateOnly(2024, 3, 20),
         });
 
@@ -79,8 +78,49 @@ public sealed class StatsTests : IClassFixture<ApiWebApplicationFactory>
 
         old.BooksFinished.Should().Be(1);
         old.Months[2].BooksFinished.Should().Be(1);
-        old.Months[2].PagesRead.Should().Be(0);
-        current.BooksFinished.Should().Be(0);
+        old.Months[2].PagesRead.Should().Be(512);
+        old.PagesRead.Should().Be(512);
+        current.PagesRead.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Year_ReadBookWithLogs_CountsOnlyWhatWasLogged()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        var book = await LibraryTestData.CreateBookAsync(client, r => r with { TotalPages = 300 });
+        await LogAsync(client, book.Id, 120, new DateOnly(2026, 9, 10));
+        await LogAsync(client, book.Id, 300, new DateOnly(2026, 10, 2));
+
+        var year = await YearAsync(client, 2026);
+
+        year.PagesRead.Should().Be(300);
+        year.Months[9].PagesRead.Should().Be(180);
+    }
+
+    [Fact]
+    public async Task Year_ReadWithoutDateOrNotRead_AddsNoPages()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        await LibraryTestData.CreateBookAsync(client, r => r with { Status = BookStatus.Read });
+        await LibraryTestData.CreateBookAsync(client, r => r with { Title = "Drácula", Status = BookStatus.Abandoned, FinishedAt = new DateOnly(2026, 3, 1) });
+
+        (await YearAsync(client, 2026)).PagesRead.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Month_Detail_ReadBookWithoutLogs_ShowsAsFinishedAndProgressed()
+    {
+        using var client = await AuthTestClient.CreateAuthorizedClientAsync(_factory);
+        await LibraryTestData.CreateBookAsync(client, r => r with
+        {
+            Title = "Frankenstein", TotalPages = 280, Status = BookStatus.Read, FinishedAt = new DateOnly(2024, 5, 4),
+        });
+
+        var month = (await client.GetFromJsonAsync<MonthDetailDto>("/v1/stats/2024/5", LibraryTestData.Json))!;
+
+        month.PagesRead.Should().Be(280);
+        month.Finished.Should().ContainSingle().Which.Title.Should().Be("Frankenstein");
+        month.Progressed.Select(p => (p.Title, p.PagesRead)).Should().Equal(("Frankenstein", 280));
     }
 
     [Fact]

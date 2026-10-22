@@ -9,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Libris.Application.UseCases.Stats;
 
 /// <summary>
-/// Finished books count by FinishedAt (read books only); pages by the deltas of logs dated in the period.
+/// Finished books count by FinishedAt (read books only); pages by the deltas of logs dated in the period, or a whole
+/// unlogged book on its finish day.
 /// Computed in memory: a single reader's whole history is a few thousand rows at most.
 /// </summary>
 public class StatsService
@@ -87,8 +88,19 @@ public class StatsService
     private static IEnumerable<Book> Finished(IEnumerable<Book> books) =>
         books.Where(b => b.Status == BookStatus.Read && b.FinishedAt is not null);
 
+    /// <summary>
+    /// What the logs say was read. A book finished on a known day with no logs at all (read before it was registered)
+    /// counts its whole length on that day, so old reads show up in the pages too.
+    /// </summary>
     private static IEnumerable<BookDelta> Deltas(IEnumerable<Book> books) =>
-        books.SelectMany(b => ReadingProgress.Deltas(b.Logs).Select(d => new BookDelta(b, d.Log.Date, d.PagesRead)));
+        books.SelectMany(b => b.Logs.Count == 0
+            ? Unlogged(b)
+            : ReadingProgress.Deltas(b.Logs).Select(d => new BookDelta(b, d.Log.Date, d.PagesRead)));
+
+    private static IEnumerable<BookDelta> Unlogged(Book book) =>
+        book is { Status: BookStatus.Read, FinishedAt: { } finished, TotalPages: > 0 and var pages }
+            ? [new BookDelta(book, finished, pages)]
+            : [];
 
     private sealed record BookDelta(Book Book, DateOnly Date, int PagesRead);
 }
