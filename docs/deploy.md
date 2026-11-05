@@ -2,15 +2,21 @@
 
 Executar na ordem. A VPS e o Postgres são os mesmos do BillFolder, então cada passo tem uma verificação.
 
-**Antes de colar qualquer bloco, olhe o prompt.** `>` (zsh) é o seu Mac; `deploy@billfolder-prod` é a VPS. Os passos dizem onde cada comando roda.
+**Antes de colar qualquer bloco, olhe o prompt.** `>` (zsh) é o seu Mac; o prompt da VPS (`usuário@host`) é a VPS. Os passos dizem onde cada comando roda.
+
+Os dados de acesso da VPS ficam fora do repositório. Antes de seguir, defina no terminal do Mac (valores no gerenciador de senhas e no painel da Hetzner):
+
+```bash
+export VPS_IP="…" VPS_USER="…" VPS_KEY="$HOME/.ssh/…"
+```
 
 Valores fixos desta instalação:
 
 | O quê | Valor |
 |---|---|
-| IP da VPS | `178.104.160.8` |
-| Usuário SSH | `deploy` (tem `sudo` completo, com senha) |
-| Chave SSH | `~/.ssh/billfolder_deploy_key` |
+| IP da VPS | `$VPS_IP` (painel da Hetzner) |
+| Usuário SSH | `$VPS_USER` (tem `sudo` completo, com senha) |
+| Chave SSH | `$VPS_KEY` (caminho da chave privada no Mac) |
 | Pasta do compose | `/opt/billfolder` (arquivo `compose.yml`, rede `billfolder`) |
 | Host da API | `libris-api.billfolder.app` |
 | Imagem | `ghcr.io/jesstoselli/libris-api:latest` |
@@ -18,7 +24,7 @@ Valores fixos desta instalação:
 Entrar na VPS (do Mac):
 
 ```bash
-ssh -i ~/.ssh/billfolder_deploy_key deploy@178.104.160.8
+ssh -i "$VPS_KEY" "$VPS_USER@$VPS_IP"
 ```
 
 ## 1. Repo no GitHub e secrets (Mac)
@@ -28,12 +34,12 @@ Cadastre os secrets **antes** do primeiro push: o `gh repo create ... --push` j�
 ```bash
 cd ~/Repos/Libris
 gh repo create libris-api --private --source=. --remote=origin
-gh secret set VPS_HOST --body "178.104.160.8"
-gh secret set VPS_USER --body "deploy"
-gh secret set VPS_SSH_KEY < ~/.ssh/billfolder_deploy_key
+gh secret set VPS_HOST --body "$VPS_IP"
+gh secret set VPS_USER --body "$VPS_USER"
+gh secret set VPS_SSH_KEY < "$VPS_KEY"
 ```
 
-Os secrets do GitHub não podem ser lidos de volta (nem os do BillFolder): os valores vêm da tabela acima. Para conferir a chave antes: `ssh -i ~/.ssh/billfolder_deploy_key -o BatchMode=yes deploy@178.104.160.8 whoami` deve responder `deploy`.
+Os secrets do GitHub não podem ser lidos de volta (nem os do BillFolder): os valores vêm da tabela acima. Para conferir a chave antes: `ssh -i "$VPS_KEY" -o BatchMode=yes "$VPS_USER@$VPS_IP" whoami` deve responder o `$VPS_USER`.
 
 ## 2. DNS na Cloudflare
 
@@ -43,12 +49,12 @@ Painel → `billfolder.app` → **DNS → Records → Add record**:
 | ------------ | --------------------------------------------------- |
 | Type         | `A`                                                 |
 | Name         | `libris-api`                                        |
-| IPv4         | `178.104.160.8`                                     |
+| IPv4         | `$VPS_IP`                                     |
 | Proxy status | **DNS only** (nuvem cinza, igual ao registro `api`) |
 
 DNS only é o que deixa o `certbot` (passo 5) emitir o certificado direto na VPS.
 
-Verificar (Mac): `dig +short libris-api.billfolder.app` → `178.104.160.8`.
+Verificar (Mac): `dig +short libris-api.billfolder.app` → o `$VPS_IP`.
 
 ## 3. Banco e role (VPS)
 
@@ -140,7 +146,7 @@ Não rode `docker compose up` aqui: a imagem só existe no GHCR depois do passo 
 
 ## 5. nginx + TLS (VPS)
 
-Precisa de `sudo` com a senha do `deploy`. Confira com `sudo -v && echo SUDO_OK`.
+Precisa de `sudo` com a senha do usuário de deploy. Confira com `sudo -v && echo SUDO_OK`.
 
 ```bash
 ls /etc/nginx/sites-enabled && certbot --version
@@ -173,14 +179,14 @@ sudo certbot --nginx -d libris-api.billfolder.app
 
 Esperado: `syntax is ok`, `test is successful` e `Successfully deployed certificate`. Até o passo 6, o endereço responde 502 (o container ainda não existe).
 
-### Se a senha do `sudo` do `deploy` não funcionar
+### Se a senha do `sudo` do usuário de deploy não funcionar
 
 O root só aceita chave por SSH e o console web da Hetzner costuma errar caracteres (teclado US, sem colar). O caminho que funciona:
 
 1. Hetzner Console → **Servers → billfolder-prod → Rescue → Reset root password** (só esse botão; "Enable rescue & power cycle", Power, Rebuild e Delete reiniciam ou apagam a VPS). Guarde a senha nova.
-2. No Mac, entre como `deploy` por SSH e rode `su -`, colando a senha nova do root.
-3. Como root: `passwd deploy` → defina e guarde a senha do `deploy`. `exit`.
-4. Como `deploy`: `sudo -v && echo SUDO_OK`.
+2. No Mac, entre como o usuário de deploy por SSH e rode `su -`, colando a senha nova do root.
+3. Como root: `passwd <usuário de deploy>` → defina e guarde a senha do usuário de deploy. `exit`.
+4. Como o usuário de deploy: `sudo -v && echo SUDO_OK`.
 
 ## 6. Deploy (Mac)
 
@@ -209,7 +215,7 @@ read "LIBRIS_EMAIL?Email: "; read -s "LIBRIS_PASS?Senha (min. 8): "; echo; jq -n
 Fechar o cadastro (Mac):
 
 ```bash
-ssh -i ~/.ssh/billfolder_deploy_key deploy@178.104.160.8 'cd /opt/billfolder && sed -i "s/^LIBRIS_ALLOW_SIGNUP=true/LIBRIS_ALLOW_SIGNUP=false/" .env && docker compose up -d --no-deps libris-api'
+ssh -i "$VPS_KEY" "$VPS_USER@$VPS_IP" 'cd /opt/billfolder && sed -i "s/^LIBRIS_ALLOW_SIGNUP=true/LIBRIS_ALLOW_SIGNUP=false/" .env && docker compose up -d --no-deps libris-api'
 ```
 
 Verificar: deve dar `403`.
@@ -220,7 +226,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://libris-api.billfolder.
 
 ## 8. Backup diário (VPS)
 
-O BillFolder faz backup às 03:00 e o Verto às 03:15 pelo crontab do `deploy`. O do Libris roda às 03:30 e salva **duas coisas**: o banco `libris` e o volume das capas (sem ele, uma VPS nova teria as fichas sem capa). Guarda 14 dias e registra tudo em `/opt/billfolder/logs/backup-libris.log`.
+O BillFolder faz backup às 03:00 e o Verto às 03:15 pelo crontab do usuário de deploy. O do Libris roda às 03:30 e salva **duas coisas**: o banco `libris` e o volume das capas (sem ele, uma VPS nova teria as fichas sem capa). Guarda 14 dias e registra tudo em `/opt/billfolder/logs/backup-libris.log`.
 
 Confira o nome real do volume (o Compose prefixa com o nome do projeto):
 
@@ -235,7 +241,7 @@ O backup é o script `scripts/backup-libris.sh` deste repo. Ele usa `pipefail` e
 Copiar o script (Mac):
 
 ```bash
-scp -i ~/.ssh/billfolder_deploy_key ~/Repos/Libris/scripts/backup-libris.sh deploy@178.104.160.8:/opt/billfolder/scripts/backup-libris.sh
+scp -i "$VPS_KEY" ~/Repos/Libris/scripts/backup-libris.sh "$VPS_USER@$VPS_IP":/opt/billfolder/scripts/backup-libris.sh
 ```
 
 Agendar (VPS):
@@ -279,7 +285,7 @@ Sem chave, a busca por ISBN usa a cota anônima do Google Books, que vive esgota
 1. No [Google Cloud Console](https://console.cloud.google.com/), num projeto próprio (ex.: `libris`): **APIs e serviços → Biblioteca → Books API → Ativar**.
 2. **Credenciais → Criar credenciais → Chave de API**, depois **Editar**:
    - **Restrições de API:** só **Books API**;
-   - **Restrições de aplicativo → Endereços IP:** `178.104.160.8` **e** `2a01:4f8:1c19:dcd6::/64`. A VPS sai pela internet por IPv6; só com o IPv4, o Google responde `API_KEY_IP_ADDRESS_BLOCKED`.
+   - **Restrições de aplicativo → Endereços IP:** o IPv4 da VPS (`$VPS_IP`) **e** a faixa IPv6 dela (painel da Hetzner → Networking). A VPS sai pela internet por IPv6; só com o IPv4, o Google responde `API_KEY_IP_ADDRESS_BLOCKED`.
 3. Na VPS:
 
 ```bash
